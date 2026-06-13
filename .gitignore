@@ -1,0 +1,12 @@
+node_modules
+dist
+dist-ssr
+*.local
+.DS_Store
+.vite
+tsconfig.tsbuildinfo
+
+# Secrets — never commit the API key
+.env
+.env.*
+!.env.example
