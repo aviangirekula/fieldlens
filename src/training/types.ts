@@ -34,3 +34,11 @@ export interface WalkthroughData {
 }
 
 export type TrainingModule = WalkthroughData
+
+/** Fast first-phase result: just the component + safety verdict (shown ~2s in). */
+export interface VerdictPreview {
+  component: string
+  safetyVerdict: WalkthroughData['safetyVerdict']
+  safetySummary: string
+  confidence: WalkthroughData['confidence']
+}

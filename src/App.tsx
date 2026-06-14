@@ -4,8 +4,18 @@ import { StartScreen } from './components/StartScreen.tsx'
 import { TrainingWalkthrough } from './components/TrainingWalkthrough.tsx'
 import { RegionHighlight } from './components/RegionHighlight.tsx'
 import { captureFrame, imageFileToFrame, type CapturedFrame } from './ai/captureFrame.ts'
-import { generateWalkthrough } from './ai/generateWalkthrough.ts'
-import type { WalkthroughData } from './training/types.ts'
+import { generateWalkthrough, fetchVerdict } from './ai/generateWalkthrough.ts'
+import type { WalkthroughData, VerdictPreview } from './training/types.ts'
+
+const VERDICT_PREVIEW_COPY: Record<
+  VerdictPreview['safetyVerdict'],
+  { label: string; tone: string }
+> = {
+  safe_to_inspect: { label: 'Safe to Inspect', tone: 'safe' },
+  caution: { label: 'Caution Required', tone: 'caution' },
+  do_not_touch: { label: 'Do Not Touch', tone: 'danger' },
+  unknown: { label: 'Safety Unknown', tone: 'unknown' },
+}
 import './App.css'
 
 type GenStatus = 'idle' | 'loading' | 'ready' | 'error'
@@ -23,6 +33,9 @@ export default function App() {
   const [genStatus, setGenStatus] = useState<GenStatus>('idle')
   const [walkthrough, setWalkthrough] = useState<WalkthroughData | null>(null)
   const [genError, setGenError] = useState<string | null>(null)
+  // Fast verdict shown during loading (before the full drill is ready).
+  const [verdictPreview, setVerdictPreview] = useState<VerdictPreview | null>(null)
+  const genIdRef = useRef(0)
 
   // The captured/uploaded frame is frozen here and guided over. Cleared (back
   // to live) when the session ends.
@@ -42,15 +55,27 @@ export default function App() {
 
   // Send a frame (camera OR upload) to Gemini and drive the session state.
   const runGeneration = async (frame: CapturedFrame) => {
+    const genId = ++genIdRef.current
     lastFrameRef.current = frame
     setFrozenUrl(frame.dataUrl)
     setGenStatus('loading')
     setGenError(null)
     setWalkthrough(null)
+    setVerdictPreview(null)
     setStepIndex(0)
     setCompleted(false)
+
+    // Phase 1 (fast, parallel): show the safety verdict the moment it's ready,
+    // while the full drill keeps loading. Best-effort — ignore if it fails.
+    void fetchVerdict(frame)
+      .then((v) => {
+        if (genIdRef.current === genId) setVerdictPreview(v)
+      })
+      .catch(() => {})
+
     try {
       const data = await generateWalkthrough(frame)
+      if (genIdRef.current !== genId) return
       if (data.steps.length === 0) {
         setGenStatus('error')
         setGenError(
@@ -111,11 +136,13 @@ export default function App() {
   }
 
   const endSession = () => {
+    genIdRef.current++
     setFrozenUrl(null)
     setFrozenDims(null)
     setGenStatus('idle')
     setWalkthrough(null)
     setGenError(null)
+    setVerdictPreview(null)
     setStepIndex(0)
     setCompleted(false)
   }
@@ -264,15 +291,35 @@ export default function App() {
       {/* ═══ SCANNING ANIMATION — The Wow Moment ═══ */}
       {genStatus === 'loading' && (
         <div className="gen">
-          <div className="gen__info">
-            <div className="gen__scan-icon" />
-            <div>
-              <p className="gen__text">
-                Analyzing<span className="gen__dots"></span>
-              </p>
-              <span className="gen__sub">Building your inspection drill</span>
+          {verdictPreview ? (
+            <div
+              className={`gen__verdict gen__verdict--${VERDICT_PREVIEW_COPY[verdictPreview.safetyVerdict].tone}`}
+            >
+              <span className="gen__verdict-tag">
+                {VERDICT_PREVIEW_COPY[verdictPreview.safetyVerdict].label}
+              </span>
+              <span className="gen__verdict-component">
+                {verdictPreview.component}
+              </span>
+              <span className="gen__verdict-summary">
+                {verdictPreview.safetySummary}
+              </span>
+              <div className="gen__info gen__info--compact">
+                <div className="gen__scan-icon" />
+                <span className="gen__sub">Building your inspection drill…</span>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="gen__info">
+              <div className="gen__scan-icon" />
+              <div>
+                <p className="gen__text">
+                  Analyzing<span className="gen__dots"></span>
+                </p>
+                <span className="gen__sub">Identifying the component…</span>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

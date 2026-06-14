@@ -1,0 +1,4 @@
+[
+  { "file": "contactor.jpg", "component": "contactor", "expected": "caution" },
+  { "file": "panel.jpg", "component": "circuit breaker panel", "expected": "caution" }
+]

@@ -1627,3 +1627,52 @@
     border-left: 1px solid var(--fl-glass-border);
   }
 }
+
+/* ── Verdict-first preview (shown during loading, ~2s in) ─────────────────── */
+.gen__verdict {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  text-align: center;
+  padding: 22px 26px;
+  max-width: 86vw;
+  border-radius: var(--fl-r-lg, 20px);
+  background: rgba(10, 12, 15, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--fl-glass-border, rgba(255, 255, 255, 0.12));
+  animation: gen-verdict-in 0.3s ease;
+}
+@keyframes gen-verdict-in {
+  from { opacity: 0; transform: scale(0.94); }
+  to { opacity: 1; transform: none; }
+}
+.gen__verdict-tag {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 5px 13px;
+  border-radius: 999px;
+}
+.gen__verdict--safe .gen__verdict-tag { background: var(--fl-green-dim); color: var(--fl-green); }
+.gen__verdict--caution .gen__verdict-tag { background: var(--fl-amber-dim); color: var(--fl-amber); }
+.gen__verdict--danger .gen__verdict-tag { background: var(--fl-red-dim); color: var(--fl-red); }
+.gen__verdict--unknown .gen__verdict-tag { background: rgba(255, 255, 255, 0.1); color: var(--fl-text-secondary); }
+.gen__verdict-component {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.01em;
+}
+.gen__verdict-summary {
+  font-size: 0.9rem;
+  color: var(--fl-text-secondary);
+  line-height: 1.4;
+  max-width: 32ch;
+}
+.gen__info--compact {
+  margin-top: 10px;
+  gap: 8px;
+}

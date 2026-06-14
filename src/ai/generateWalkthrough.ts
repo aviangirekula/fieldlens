@@ -1,5 +1,23 @@
 import type { CapturedFrame } from './captureFrame.ts'
-import type { WalkthroughData } from '../training/types.ts'
+import type { WalkthroughData, VerdictPreview } from '../training/types.ts'
+
+/**
+ * Fast first phase: just the component + safety verdict (~2s). Used to show the
+ * safety verdict the instant it's ready while the full drill is still loading.
+ * Best-effort — callers should treat a rejection as "no preview yet".
+ */
+export async function fetchVerdict(frame: CapturedFrame): Promise<VerdictPreview> {
+  const res = await fetch('/api/verdict', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ image: frame.base64, mimeType: frame.mimeType }),
+  })
+  const body: unknown = await res.json()
+  if (!res.ok || !body || typeof body !== 'object' || typeof (body as VerdictPreview).component !== 'string') {
+    throw new Error('verdict unavailable')
+  }
+  return body as VerdictPreview
+}
 
 /**
  * Send a captured frame to our server proxy and get back a normalized
