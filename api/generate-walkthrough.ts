@@ -1,9 +1,11 @@
-import { runWalkthrough } from '../server/geminiCore.ts'
+import { runWalkthrough } from '../server/geminiCore'
 
 // Production serverless function (Vercel). Mirrors the dev Vite middleware in
 // server/geminiProxy.ts — both call the shared core. GEMINI_API_KEY is set as a
 // Vercel project environment variable; it is never shipped to the browser.
-export const config = { runtime: 'nodejs' }
+// Edge runtime: native Web (Request -> Response) handler; our core only uses
+// fetch, so it's fully edge-compatible and has fast cold starts.
+export const config = { runtime: 'edge' }
 
 function json(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), {

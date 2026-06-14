@@ -1,8 +1,9 @@
-import { runVerdict } from '../server/geminiCore.ts'
+import { runVerdict } from '../server/geminiCore'
 
 // Fast first-phase endpoint (component + safety verdict only). Production
-// serverless function (Vercel); mirrors the dev Vite middleware.
-export const config = { runtime: 'nodejs' }
+// serverless function (Vercel); mirrors the dev Vite middleware. Edge runtime —
+// native Web handler, fast cold starts, only uses fetch.
+export const config = { runtime: 'edge' }
 
 function json(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), {
