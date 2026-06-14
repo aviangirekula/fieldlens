@@ -1,3 +1,4 @@
+import { useEffect, useState, useCallback } from 'react'
 import type { TrainingModule } from '../training/types.ts'
 
 interface TrainingWalkthroughProps {
@@ -12,28 +13,28 @@ interface TrainingWalkthroughProps {
 
 const VERDICT_COPY = {
   safe_to_inspect: {
-    label: 'Safe to look at',
-    icon: '✓',
+    label: 'Safe to Inspect',
+    icon: 'OK',
     tone: 'safe',
-    detail: 'You can visually inspect this component. Do not touch anything yet.',
+    detail: 'You can visually inspect this component. Do not touch anything until lockout/tagout and zero-energy verification are complete.',
   },
   caution: {
-    label: 'Be careful',
-    icon: '⚠',
+    label: 'Caution Required',
+    icon: '!',
     tone: 'caution',
-    detail: 'This component may be energized. Look only — do not touch without a supervisor.',
+    detail: 'This component may be energized. Look only — do not touch without a qualified supervisor present.',
   },
   do_not_touch: {
-    label: 'Do not touch',
-    icon: '🛑',
+    label: 'Do Not Touch',
+    icon: 'X',
     tone: 'danger',
-    detail: 'This looks dangerous. Do not touch anything. Get a qualified supervisor first.',
+    detail: 'This appears dangerous. Do not touch anything. Get a qualified supervisor immediately.',
   },
   unknown: {
-    label: 'Safety unknown',
+    label: 'Safety Unknown',
     icon: '?',
     tone: 'unknown',
-    detail: 'Cannot tell from this photo. Treat as energized until verified.',
+    detail: 'Cannot determine from this image. Treat as energized until verified by a qualified supervisor.',
   },
 } as const
 
@@ -53,31 +54,57 @@ export function TrainingWalkthrough({
   const verdict = VERDICT_COPY[module.safetyVerdict ?? 'unknown']
   const doText = step?.action || step?.instruction
 
+  const [animKey, setAnimKey] = useState(0)
+  useEffect(() => {
+    setAnimKey((k) => k + 1)
+  }, [index])
+
+  const handleWindowKey = useCallback((e: globalThis.KeyboardEvent) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') {
+      e.preventDefault()
+      onNext()
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault()
+      onBack()
+    } else if (e.key === 'Escape') {
+      onClose()
+    } else if (e.key === 'r' || e.key === 'R') {
+      onRestart()
+    }
+  }, [onNext, onBack, onClose, onRestart])
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleWindowKey)
+    return () => window.removeEventListener('keydown', handleWindowKey)
+  }, [handleWindowKey])
+
   return (
     <section
       className="wt"
       role="dialog"
       aria-label={`${module.component} training walkthrough`}
+      aria-modal="true"
+      onKeyDown={handleWindowKey as unknown as React.KeyboardEventHandler<HTMLElement>}
     >
-      <div className="wt__bar">
+      <div className="wt__bar" role="progressbar" aria-valuenow={Math.round(progress)} aria-valuemin={0} aria-valuemax={100} aria-label="Walkthrough progress">
         <div className="wt__bar-fill" style={{ width: `${progress}%` }} />
       </div>
 
-      <button className="wt__close" onClick={onClose} aria-label="End walkthrough">
-        ✕
+      <button className="wt__close" onClick={onClose} aria-label="End walkthrough" title="End walkthrough (Esc)">
+        X
       </button>
 
       {completed ? (
-        <div className="wt__body wt__body--complete">
+        <div className="wt__body wt__body--complete" key={animKey}>
           <div className="wt__complete">
-            <div className="wt__check" aria-hidden>✓</div>
-            <h2 className="wt__title">You're done</h2>
+            <div className="wt__check" aria-hidden>OK</div>
+            <h2 className="wt__title">Walkthrough Complete</h2>
             <p className="wt__instruction">
-              You've walked through the {module.component} inspection.
+              You've completed the {module.component} inspection drill.
             </p>
             <div className="wt__controls">
               <button className="wt__btn wt__btn--ghost" onClick={onRestart}>
-                Do it again
+                Do It Again
               </button>
               <button className="wt__btn wt__btn--primary" onClick={onClose}>
                 Finish
@@ -87,11 +114,11 @@ export function TrainingWalkthrough({
         </div>
       ) : (
         <>
-          <div className="wt__body">
+          <div className="wt__body" key={animKey}>
             {/* Step 0: safety verdict, shown first, always */}
             {index === 0 && (
-              <div className={`wt__verdict wt__verdict--${verdict.tone}`}>
-                <span className="wt__verdict-icon">{verdict.icon}</span>
+              <div className={`wt__verdict wt__verdict--${verdict.tone}`} role="alert">
+                <span className="wt__verdict-icon" aria-hidden>{verdict.icon}</span>
                 <div>
                   <strong className="wt__verdict-label">{verdict.label}</strong>
                   <p className="wt__verdict-detail">{verdict.detail}</p>
@@ -105,14 +132,14 @@ export function TrainingWalkthrough({
 
             <div className="wt__head">
               <span className="wt__eyebrow">{module.component}</span>
-              <span className="wt__counter">
+              <span className="wt__counter" aria-label={`Step ${index + 1} of ${total}`}>
                 {index + 1} / {total}
               </span>
             </div>
 
             {/* The main action — big, clear, unmissable */}
             <div className="wt__action-card">
-              <span className="wt__action-num">{index + 1}</span>
+              <span className="wt__action-num" aria-hidden>{index + 1}</span>
               <div>
                 <h2 className="wt__action-title">{step.title}</h2>
                 <p className="wt__action-text">{doText}</p>
@@ -122,7 +149,7 @@ export function TrainingWalkthrough({
             {/* What to check */}
             {step.check && (
               <div className="wt__check-row">
-                <span className="wt__check-label">Look at</span>
+                <span className="wt__check-label">Look At</span>
                 <p>{step.check}</p>
               </div>
             )}
@@ -130,7 +157,7 @@ export function TrainingWalkthrough({
             {/* What normal looks like */}
             {step.expectedResult && (
               <div className="wt__check-row wt__check-row--expect">
-                <span className="wt__check-label">Should look like</span>
+                <span className="wt__check-label">Should Look Like</span>
                 <p>{step.expectedResult}</p>
               </div>
             )}
@@ -143,7 +170,7 @@ export function TrainingWalkthrough({
             {/* Safety note */}
             {step.safetyNote && (
               <div className="wt__safety" role="note">
-                <span className="wt__safety-tag">⚠ Safety</span>
+                <span className="wt__safety-tag" aria-hidden>SAFETY</span>
                 <span className="wt__safety-text">{step.safetyNote}</span>
               </div>
             )}
@@ -153,7 +180,7 @@ export function TrainingWalkthrough({
               <>
                 {module.visibleEvidence.length > 0 && (
                   <div className="wt__evidence">
-                    <span className="wt__evidence-title">What we can see</span>
+                    <span className="wt__evidence-title">Visible in Image</span>
                     <ul>
                       {module.visibleEvidence.map((item) => (
                         <li key={item}>{item}</li>
@@ -163,7 +190,7 @@ export function TrainingWalkthrough({
                 )}
                 {module.notVisible.length > 0 && (
                   <div className="wt__evidence">
-                    <span className="wt__evidence-title">Can't tell from photo</span>
+                    <span className="wt__evidence-title">Cannot Verify from Photo</span>
                     <ul>
                       {module.notVisible.map((item) => (
                         <li key={item}>{item}</li>
@@ -180,10 +207,11 @@ export function TrainingWalkthrough({
               className="wt__btn wt__btn--ghost"
               onClick={onBack}
               disabled={index === 0}
+              aria-label="Previous step"
             >
-              Back
+              Previous
             </button>
-            <button className="wt__btn wt__btn--primary" onClick={onNext}>
+            <button className="wt__btn wt__btn--primary" onClick={onNext} aria-label={isLast ? 'Finish walkthrough' : 'Next step'}>
               {isLast ? 'Finish' : 'Next'}
             </button>
           </div>
@@ -191,7 +219,7 @@ export function TrainingWalkthrough({
       )}
 
       <p className="wt__ai">
-        AI-generated guidance — always verify with a qualified supervisor.
+        AI-generated guidance — always verify with a qualified supervisor
       </p>
     </section>
   )

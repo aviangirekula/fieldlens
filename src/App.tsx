@@ -67,7 +67,7 @@ export default function App() {
       if (data.steps.length === 0) {
         setGenStatus('error')
         setGenError(
-          `Couldn’t identify a serviceable component${
+          `Couldn't identify a serviceable component${
             data.component && data.component !== 'Unknown'
               ? ` (saw: ${data.component})`
               : ''
@@ -154,10 +154,12 @@ export default function App() {
     ? null
     : completed
       ? walkthrough.box
-      : (walkthrough.steps[stepIndex]?.box ?? null)
+      : (walkthrough.steps[stepIndex]?.box ?? walkthrough.box)
+
+  const showSidebar = genStatus === 'ready'
 
   return (
-    <div className="stage">
+    <div className={`stage${showSidebar ? ' stage--sidebar' : ''}`}>
       <video ref={videoRef} className="feed" autoPlay muted playsInline />
 
       {/* Frozen captured/uploaded frame we guide over. */}
@@ -274,7 +276,6 @@ export default function App() {
             aria-label="Switch camera"
             title="Switch camera"
           >
-            {/* flip-camera glyph */}
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M11 19H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h3l2-3h6l1 1.5" />
               <path d="M14.5 4H20a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-3" />
@@ -285,22 +286,26 @@ export default function App() {
         </div>
       )}
 
-      {/* AI generation: loading state (shown over the frozen frame). */}
+      {/* ═══ SCANNING ANIMATION — The Wow Moment ═══ */}
       {genStatus === 'loading' && (
         <div className="gen">
-          <div className="spinner" />
-          <p className="gen__text">
-            Reading the component…
-            <span className="gen__sub">Building your inspection drill</span>
-          </p>
+          <div className="gen__info">
+            <div className="gen__scan-icon" />
+            <div>
+              <p className="gen__text">
+                Analyzing<span className="gen__dots"></span>
+              </p>
+              <span className="gen__sub">Building your inspection drill</span>
+            </div>
+          </div>
         </div>
       )}
 
       {/* AI generation: graceful error / no-component state. */}
       {genStatus === 'error' && (
-        <div className="gen">
+        <div className="gen gen--error">
           <div className="card">
-            <h1 className="card__title">Couldn’t generate guidance</h1>
+            <h1 className="card__title">Couldn't generate guidance</h1>
             <p className="card__body">{genError}</p>
             <div className="gen__actions">
               <button className="btn btn--ghost" onClick={endSession}>

@@ -28,7 +28,9 @@ Look at the image and:
 
 Rules:
 - Write for someone who has never done this before and is nervous.
-- Use short, direct sentences. Every action should be so specific that the technician doesn't have to think. Example: "Find the two screws on the top cover. Turn each one counterclockwise with a #2 Phillips screwdriver." NOT "remove the cover".
+- EVERY step must be a single, concrete physical action. Break everything down into the smallest possible actions. Do not combine multiple actions into one step.
+- Example of correct granularity: "Step 1: Look at the top of the contactor. Find the screw terminal labeled L1." "Step 2: Look at the wire connected to L1. Check if the wire is fully seated in the terminal." "Step 3: Look for discoloration or burn marks around the L1 terminal."
+- Example of WRONG (not granular enough): "Inspect the L1, L2, L3 terminals." Instead split into individual steps for each terminal.
 - Never say "inspect", "check", "verify", or "ensure" without saying exactly HOW and WHAT TO LOOK FOR.
 - Never tell the technician to touch, loosen, remove, or probe anything unless the step starts with confirmed lockout/tagout and zero-voltage verification.
 - If a task needs a tool, name the tool and where to put it. If you can't tell from the image, say "ask a qualified supervisor".
@@ -38,18 +40,17 @@ Rules:
 - "confidence" must be one of: "high", "medium", "low".
 - "visible_evidence" is 2-4 short bullets naming what you can actually see.
 - "not_visible" is 2-4 short bullets naming things the image can't prove (power state, meter readings, wiring diagram).
-- Return 4-6 steps. Each step has: "title" (what this step is about), "action" (the exact next move), "check" (what to look at), "expected_result" (what normal looks like), "why" (why it matters), "safety_note" (warning or empty string "").
-- A good step reads like: "action": "Look at the top of the contactor. Find the terminals labeled L1, L2, L3.", "check": "The three top terminals.", "expected_result": "Three wires, one on each terminal, with no burn marks or loose connections.", "why": "Loose or burned terminals cause overheating and can start a fire."
+- Return 8-14 steps. Be extremely granular. Each step should cover ONE look, ONE check, or ONE action. Do not skip any detail.
+- Each step has: "title" (what this step is about), "action" (the exact next move), "check" (what to look at), "expected_result" (what normal looks like), "why" (why it matters), "safety_note" (warning or empty string ""), "region" (where in the image to look - one of: "full" for the whole component, "top" for the top area, "bottom" for bottom area, "left" for left side, "right" for right side, "center" for the middle, "top_left" for top-left, "top_right" for top-right, "bottom_left" for bottom-left, "bottom_right" for bottom-right, "top_center" for top-center, "bottom_center" for bottom-center). Choose the region that best matches where this step's action happens in the image.
+- A good step reads like: "action": "Look at the top of the contactor. Find the terminal labeled L1.", "check": "The L1 terminal area.", "expected_result": "Wire is fully seated, no burn marks, no discoloration.", "why": "Loose L1 connections cause overheating and equipment failure.", "region": "top"
 - "description" is one sentence about what this component does.
-- For the overall component AND for each step, include a bounding box "box" locating the EXACT visible region in THIS image the technician should look at, formatted as [ymin, xmin, ymax, xmax] using integers from 0 to 1000 (origin at the top-left). Tight boxes are better than large approximate boxes. If a step's region is not visible in the image, use an empty array [].
 - If the image does NOT clearly show an HVAC or electrical component, set "component" to "Unknown" and return an empty "steps" array.
 
 Respond with ONLY a JSON object of this exact shape:
-{"component": string, "description": string, "safety_verdict": string, "safety_summary": string, "confidence": string, "training_goal": string, "visible_evidence": string[], "not_visible": string[], "box": [ymin,xmin,ymax,xmax], "steps": [{"title": string, "action": string, "check": string, "expected_result": string, "why": string, "safety_note": string, "box": [ymin,xmin,ymax,xmax]}]}`
+{"component": string, "description": string, "safety_verdict": string, "safety_summary": string, "confidence": string, "training_goal": string, "visible_evidence": string[], "not_visible": string[], "steps": [{"title": string, "action": string, "check": string, "expected_result": string, "why": string, "safety_note": string, "region": string}]}`
 
 // Forces Gemini to emit JSON matching this shape (uppercase enum types per the
 // Gemini schema spec). Belt-and-suspenders with the text-stripping parser below.
-const BOX_SCHEMA = { type: 'ARRAY', items: { type: 'NUMBER' } }
 
 const RESPONSE_SCHEMA = {
   type: 'OBJECT',
@@ -62,7 +63,6 @@ const RESPONSE_SCHEMA = {
     training_goal: { type: 'STRING' },
     visible_evidence: { type: 'ARRAY', items: { type: 'STRING' } },
     not_visible: { type: 'ARRAY', items: { type: 'STRING' } },
-    box: BOX_SCHEMA,
     steps: {
       type: 'ARRAY',
       items: {
@@ -74,7 +74,7 @@ const RESPONSE_SCHEMA = {
           expected_result: { type: 'STRING' },
           why: { type: 'STRING' },
           safety_note: { type: 'STRING' },
-          box: BOX_SCHEMA,
+          region: { type: 'STRING' },
         },
         required: [
           'title',
@@ -83,7 +83,7 @@ const RESPONSE_SCHEMA = {
           'expected_result',
           'why',
           'safety_note',
-          'box',
+          'region',
         ],
       },
     },
@@ -97,7 +97,6 @@ const RESPONSE_SCHEMA = {
     'training_goal',
     'visible_evidence',
     'not_visible',
-    'box',
     'steps',
   ],
 }
@@ -116,7 +115,7 @@ interface NormalizedStep {
   why: string
   instruction: string
   safetyNote: string
-  box: Box | null
+  box: Box
 }
 interface Normalized {
   component: string
@@ -127,23 +126,31 @@ interface Normalized {
   trainingGoal: string
   visibleEvidence: string[]
   notVisible: string[]
-  box: Box | null
+  box: Box
   steps: NormalizedStep[]
 }
 
-function convertBox(raw: unknown, options: { rejectBroad?: boolean } = {}): Box | null {
-  if (!Array.isArray(raw) || raw.length !== 4) return null
-  const [ymin, xmin, ymax, xmax] = raw.map(Number)
-  if ([ymin, xmin, ymax, xmax].some((n) => !Number.isFinite(n))) return null
-  const x = Math.min(1, Math.max(0, xmin / 1000))
-  const y = Math.min(1, Math.max(0, ymin / 1000))
-  const w = Math.min(1 - x, Math.max(0, (xmax - xmin) / 1000))
-  const h = Math.min(1 - y, Math.max(0, (ymax - ymin) / 1000))
-  if (w <= 0.01 || h <= 0.01) return null
-  if (options.rejectBroad && (w * h > 0.65 || (w > 0.92 && h > 0.7))) {
-    return null
+const REGION_PRESETS: Record<string, Box> = {
+  full:            { x: 0.1,  y: 0.1,  w: 0.8,  h: 0.8 },
+  top:             { x: 0.1,  y: 0.02, w: 0.8,  h: 0.35 },
+  bottom:          { x: 0.1,  y: 0.63, w: 0.8,  h: 0.35 },
+  left:            { x: 0.02, y: 0.1,  w: 0.35, h: 0.8 },
+  right:           { x: 0.63, y: 0.1,  w: 0.35, h: 0.8 },
+  center:          { x: 0.25, y: 0.25, w: 0.5,  h: 0.5 },
+  top_left:        { x: 0.02, y: 0.02, w: 0.45, h: 0.45 },
+  top_right:       { x: 0.53, y: 0.02, w: 0.45, h: 0.45 },
+  bottom_left:     { x: 0.02, y: 0.53, w: 0.45, h: 0.45 },
+  bottom_right:    { x: 0.53, y: 0.53, w: 0.45, h: 0.45 },
+  top_center:      { x: 0.2,  y: 0.02, w: 0.6,  h: 0.35 },
+  bottom_center:   { x: 0.2,  y: 0.63, w: 0.6,  h: 0.35 },
+}
+
+function regionToBox(region: unknown): Box {
+  if (typeof region === 'string') {
+    const r = region.trim().toLowerCase().replace(/[\s_-]+/g, '_')
+    if (r in REGION_PRESETS) return REGION_PRESETS[r]
   }
-  return { x, y, w, h }
+  return REGION_PRESETS.full
 }
 
 function send(res: ServerResponse, status: number, body: unknown) {
@@ -238,7 +245,7 @@ function normalize(raw: unknown): Normalized | null {
         (typeof (s as Record<string, unknown>).action === 'string' ||
           typeof (s as Record<string, unknown>).instruction === 'string'),
     )
-    .slice(0, 7)
+    .slice(0, 16)
     .map((s) => {
       const note = s.safety_note ?? s.safetyNote
       const action = textField(s.action ?? s.instruction, '')
@@ -253,9 +260,10 @@ function normalize(raw: unknown): Normalized | null {
         why,
         instruction: action,
         safetyNote: typeof note === 'string' ? note.trim() : '',
-        box: convertBox(s.box, { rejectBroad: true }),
+        box: regionToBox(s.region),
       }
     })
+  const componentBox = REGION_PRESETS.full
   if (!component && steps.length === 0) return null
   return {
     component: component || 'Unknown',
@@ -266,8 +274,11 @@ function normalize(raw: unknown): Normalized | null {
     trainingGoal,
     visibleEvidence,
     notVisible,
-    box: convertBox(p.box),
-    steps,
+    box: componentBox,
+    steps: steps.map((s) => ({
+      ...s,
+      box: s.box ?? componentBox,
+    })),
   }
 }
 
