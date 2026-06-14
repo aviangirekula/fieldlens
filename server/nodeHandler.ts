@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import type { CoreResult } from './geminiCore'
+import type { CoreResult } from './geminiCore.ts'
 
 // Builds a standard Vercel Node.js serverless handler (req, res) around a core
 // runner. Reads GEMINI_API_KEY from process.env (Vercel project env var). Used
