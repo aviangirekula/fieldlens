@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>fieldlens — AR Training &amp; Guidance for HVAC Technicians</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Lora:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+        :root {
+            --honeydew: #E9FAE3;
+            --honeydew-medium: #DEE8D5;
+            --lilac: #AC92A6;
+            --lilac-dark: #8E7388;
+            --ink: #18181b;
+            --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        body {
+            font-family: 'Lora', Georgia, serif;
+            color: var(--ink);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .font-display {
+            font-family: 'Outfit', system-ui, sans-serif;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1.15;
+        }
+        .font-mono {
+            font-family: 'IBM Plex Mono', 'Courier New', monospace;
+        }
+
+        /* Speed up initial paint */
+        html { font-display: swap; }
+
+       
+ /* --- Scroll Progress Bar --- */
+        #scroll-progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 5px;
+            background: var(--lilac);
+            z-index: 9999;
+            box-shadow: 0 0 12px var(--lilac);
+            border-radius: 0 4px 4px 0;
+            transition: width 0.1s linear;
+        }
+
+        /* --- Grid Background --- */
+        .grid-bg {
+            background-image: linear-gradient(to right, rgba(213,199,188,0.08) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(213,199,188,0.08) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        /* --- Reveal Animations (once only, no replay) --- */
+        @keyframes arReveal {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .reveal-hidden {
+            opacity: 0;
+            transform: translateY(50px);
+        }
+        .reveal-visible {
+            animation: arReveal 2s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        /* --- Hero Word Reveal --- */
+        .reveal-word {
+            display: inline-block;
+            overflow: hidden;
+            padding: 0 0.1em 0.25em;
+            margin: 0 -0.1em;
+            line-height: 1.1;
+        }
+        .reveal-word > span {
+            display: inline-block;
+            transform: translateY(110%);
+            opacity: 0;
+            transition: transform 0.5s var(--ease-expo), opacity 0.5s ease;
+        }
+        .reveal-word.visible > span {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* --- 3D Tilt Cards --- */
+        .tilt-card {
+            transition: transform 0.1s ease-out;
+            transform-style: preserve-3d;
+            will-change: transform;
+        }
+
+        /* --- Magnetic Button --- */
+        .magnetic-btn {
+            transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            display: inline-block;
+        }
+
+        /* === Laser — pure transform, no opacity === */
+        @keyframes laser-move {
+            0%   { transform: translateY(0); }
+            50%  { transform: translateY(280px); }
+            100% { transform: translateY(0); }
+        }
+        .ar-laser {
+            position: absolute;
+            left: 0; top: 0;
+            width: 100%;
+            height: 3px;
+            background: #4ade80;
+            box-shadow: 0 0 8px #4ade80, 0 0 20px #4ade80, 0 0 40px rgba(74,222,128,0.4);
+            pointer-events: none;
+            animation: laser-move 3s ease-in-out infinite;
+            z-index: 100;
+            opacity: 1 !important;
+        }
+
+        /* === REC Sweep Bar (visible) === */
+        @keyframes rec-sweep {
+            0%   { transform: translateX(-120%); }
+            50%  { transform: translateX(50%); }
+            100% { transform: translateX(220%); }
+        }
+        .rec-sweep {
+            animation: rec-sweep 2.5s ease-in-out infinite;
+        }
+
+        /* === Marquee animation === */
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* === Floating Animation === */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .faq-icon { transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); }
+        .faq-item.open .faq-icon { transform: rotate(180deg); }
+
+        /* --- Pulsing Glow --- */
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.05); }
+        }
+        .pulse-glow {
+            animation: pulse-glow 4s ease-in-out infinite;
+        }
+
+        /* --- AR Mockup Entry Animation --- */
+        @keyframes ar-entry {
+            0% { opacity: 0; transform: translateY(60px) scale(0.95); }
+            60% { opacity: 1; }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .entry-animate {
+            animation: ar-entry 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            animation-delay: 0.8s;
+            opacity: 0;
+        }
+
+
+        /* --- Live Feed Marquee --- */
+        .marquee-track {
+            display: flex;
+            gap: 1.5rem;
+            animation: marquee 30s linear infinite;
+            width: max-content;
+        }
+        .marquee-track:hover { animation-play-state: paused; }
+
+        /* --- Custom Selection --- */
+        ::selection {
+            background: var(--lilac);
+            color: white;
+        }
+
+        /* --- Reduced motion --- */
+/* Keep essential decorative animations off, but allow functional/lasing animations */
+@media (prefers-reduced-motion: reduce) {
+            .floating, .pulse-glow, .hero-gradient-mesh {
+                animation: none !important;
+            }
+        }
+
+        /* --- Existing custom colors mapped --- */
+        .bg-brand-honeydew-light { background-color: #E9FAE3; }
+        .bg-brand-honeydew-medium { background-color: #DEE8D5; }
+        .text-brand-lilac { color: #AC92A6; }
+        .text-brand-lilac-dark { color: #8E7388; }
+        .border-brand-honeydew-medium { border-color: #DEE8D5; }
+        .border-brand-lilac { border-color: #AC92A6; }
+        .bg-brand-lilac { background-color: #AC92A6; }
+        .hover\:bg-brand-lilac-dark:hover { background-color: #8E7388; }
+        .hover\:bg-brand-honeydew-medium:hover { background-color: #DEE8D5; }
+        .focus\:border-brand-lilac:focus { border-color: #AC92A6; }
+        .focus\:ring-brand-lilac \/50:focus { --tw-ring-color: rgba(172,146,166,0.5); }
+        .text-brand-honeydew-light { color: #E9FAE3; }
+        .ring-brand-lilac \/30 { --tw-ring-color: rgba(172,146,166,0.3); }
+        .hover\:shadow-brand-lilac \/10:hover { box-shadow: 0 4px 20px rgba(172,146,166,0.1); }
+
+        /* --- Custom Cursor --- */
+        #custom-cursor {
+            position: fixed; top: 0; left: 0;
+            width: 12px; height: 12px;
+            background: var(--lilac); border-radius: 50%;
+            pointer-events: none; z-index: 99999;
+            transition: width 0.2s ease, height 0.2s ease, background 0.2s, opacity 0.2s, border 0.2s;
+            mix-blend-mode: difference; opacity: 0.8;
+            transform: translate(-50%, -50%);
+        }
+        #custom-cursor.expanded {
+            width: 40px;
+            height: 40px;
+            background: transparent;
+            border: 2px solid var(--lilac);
+            opacity: 0.6;
+        }
+        /* --- Hero Background Gradient Mesh (replaces particles) --- */
+        .hero-gradient-mesh {
+            background: radial-gradient(circle at 20% 30%, rgba(172,146,166,0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 70%, rgba(233,250,227,0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 50% 50%, rgba(222,232,213,0.1) 0%, transparent 60%);
+            background-size: 200% 200%;
+            animation: meshShift 15s ease-in-out infinite;
+        }
+        @keyframes meshShift {
+            0%, 100% { background-position: 0% 0%, 100% 100%, 50% 50%; }
+            50% { background-position: 100% 100%, 0% 0%, 50% 50%; }
+        }
+
+        /* --- FAQ fixed --- */
+        .faq-panel {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            opacity: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+        .faq-item.open .faq-panel {
+            max-height: 500px;
+            opacity: 1;
+            padding-top: 0;
+            padding-bottom: 16px;
+        }
+        body { cursor: none; }
+        a, button, input, select, textarea, label { cursor: none; }
+        @media (pointer: coarse) {
+            #custom-cursor { display: none !important; }
+            body, a, button, input, select, textarea, label { cursor: auto !important; }
+        }
+    </style>
+</head>
+<body class="bg-white text-zinc-900 antialiased">
+    <div id="custom-cursor"></div>
+    <div id="scroll-progress-bar"></div>
+
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 bg-white z-50 px-4 py-2 shadow border rounded">Skip to main content</a>
+
+    <!-- ========== HEADER ========== -->
+    <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-zinc-100">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="#" class="font-display text-xl tracking-tight text-zinc-900 hover:opacity-80 transition-opacity">fieldlens</a>
+            <nav class="flex items-center space-x-8">
+                <a href="#how-it-works" class="text-sm font-medium text-zinc-500 hover:text-zinc-900 transition-colors magnetic-btn">How It Works</a>
+                <a href="#form-factor" class="text-sm font-medium text-zinc-500 hover:text-zinc-900 transition-colors magnetic-btn">Compatibility</a>
+                <button onclick="scrollToWaitlist()" type="button" class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-zinc-900 bg-brand-honeydew-light border border-brand-honeydew-medium rounded-lg hover:bg-brand-honeydew-medium transition-all active:scale-95 magnetic-btn">Join Waitlist</button>
+            </nav>
+        </div>
+    </header>
+
+    <main id="main-content">
+
+        <!-- ========== HERO ========== -->
+        <section class="relative overflow-hidden pt-12 pb-24 md:pt-20 md:pb-32 grid-bg border-b border-zinc-100">
+            <div class="absolute inset-0 w-full h-full hero-gradient-mesh pointer-events-none z-0"></div>
+            <div class="container mx-auto px-6 relative z-10">
+                <div class="grid lg:grid-cols-12 gap-16 items-center">
+                    <div class="lg:col-span-7 space-y-8">
+                        <div class="reveal-hidden inline-flex items-center gap-2 px-3 py-1 text-xs font-semibold rounded-full bg-brand-honeydew-light text-brand-lilac-dark border border-brand-honeydew-medium/50">
+                            <span class="w-1.5 h-1.5 rounded-full bg-brand-lilac animate-pulse"></span>
+                            AR-Guided Mentorship — Private Beta
+                        </div>
+                        <h1 class="font-display text-4xl sm:text-5xl lg:text-6xl text-zinc-900 leading-[1.1] tracking-tight" id="hero-headline">
+                            The HVAC industry is 110,000 technicians short. FieldLens closes the gap with AR mentorship on any device.
+                        </h1>
+                        <p class="text-xl sm:text-2xl font-medium text-zinc-600 reveal-hidden">Point your phone, laptop, or AR glasses at any component — FieldLens identifies it and guides you step by step. Like a senior technician looking over your shoulder.</p>
+                        <p class="text-base sm:text-lg text-zinc-500 max-w-xl reveal-hidden">New techs normally learn by shadowing a veteran on live, dangerous equipment — slow, expensive, rarely available. FieldLens makes that mentorship scalable and on-demand. No app install. Works on any device with a camera — phone, laptop, or AR.</p>
+
+                        <div id="waitlist-section" class="bg-white p-6 sm:p-8 rounded-2xl border border-brand-honeydew-medium shadow-sm max-w-md transition-all hover:shadow-md reveal-hidden">
+                            <div id="form-container">
+                                <form id="hero-waitlist-form" action="https://formsubmit.co/fieldlens" method="POST" class="space-y-4">
+  <input type="hidden" name="_subject" value="New fieldlens Waitlist Signup">
+  <input type="hidden" name="_next" value="https://fieldlens.vercel.app/?success=true">
+ <input type="hidden" name="_captcha" value="false">
+ <input type="hidden" name="_template" value="table">
+ <input type="text" name="_honey" style="display:none">
+                                    <div>
+                                        <label for="email" class="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1.5">Email address</label>
+                                        <input type="email" id="email" name="email" placeholder="name@company.com" required class="w-full bg-zinc-50 border border-zinc-200 text-zinc-900 rounded-xl px-4 py-3.5 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-lilac/50 focus:border-brand-lilac transition-all">
+                                    </div>
+                                    <div>
+                                        <label for="role" class="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1.5">I am a...</label>
+                                        <div class="relative">
+                                            <select id="role" name="role" required class="w-full bg-zinc-50 border border-zinc-200 text-zinc-900 rounded-xl px-4 py-3.5 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-lilac/50 focus:border-brand-lilac transition-all appearance-none">
+                                                <option value="" disabled selected>Select your role</option>
+                                                <option value="I work in HVAC">I work in HVAC</option>
+                                                <option value="I run an HVAC business">I run an HVAC business</option>
+                                                <option value="I'm curious">I'm curious</option>
+                                            </select>
+                                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-400" aria-hidden="true">
+                                                <svg class="fill-current h-4 w-4" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="w-full bg-brand-lilac hover:bg-brand-lilac-dark text-white font-display font-medium py-3.5 px-6 rounded-xl transition-all hover:shadow-md active:scale-[0.98] magnetic-btn">Join the waitlist</button>
+                                </form>
+                            </div>
+                            <div id="success-container" class="hidden text-center py-4 space-y-4">
+                                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-brand-honeydew-light border border-brand-honeydew-medium text-brand-lilac" aria-hidden="true">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                                </div>
+                                <h3 class="font-display text-xl font-bold text-zinc-900">You're in the queue!</h3>
+ <p class="text-sm text-zinc-600">We'll email you with further instructions.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AR Mockup -->
+                    <div class="lg:col-span-5 relative mt-8 lg:mt-0 reveal-hidden" id="ar-mockup">
+                        <!-- parallax target -- outer wrapper -->
+                        <div class="ar-parallax-wrap relative">
+                            <div class="absolute -inset-2 rounded-[2rem] bg-gradient-to-tr from-brand-honeydew-light to-brand-lilac/30 opacity-70 blur-xl"></div>
+                            <div class="relative aspect-[3/4] w-full max-w-xl mx-auto bg-zinc-950 rounded-3xl border border-zinc-800/80 shadow-2xl overflow-hidden p-5">
+                                <div class="relative w-full h-full rounded-2xl overflow-hidden bg-zinc-900 flex flex-col justify-between p-4 floating">
+                                    <div class="ar-laser"></div>
+
+                                    <div class="relative z-10 flex justify-between items-start text-white font-mono text-sm">
+                                        <div class="bg-black/60 backdrop-blur-md px-3 py-2 rounded border border-zinc-800 space-y-1.5 min-w-[110px]">
+                                            <div class="flex items-center gap-2">
+                                                <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shrink-0"></span>
+                                                <span class="text-xs font-bold tracking-wider">LIVE REC</span>
+                                            </div>
+                                            <div class="text-zinc-400 font-light text-xs">FOV: 120° AR_CAM</div>
+                                            <div class="w-full h-[3px] bg-zinc-800 rounded-full overflow-hidden mt-1 relative">
+                                                <div class="h-full w-8 bg-gradient-to-r from-red-400 via-red-500 to-red-400 rounded-full rec-sweep relative shadow-[0_0_6px_rgba(239,68,68,0.6)]"></div>
+                                            </div>
+                                        </div>
+                                        <div class="bg-black/60 backdrop-blur-md px-3 py-2 rounded border border-zinc-800 text-right space-y-0.5">
+                                            <div class="text-xs">STATUS: <span class="text-brand-honeydew-light font-bold animate-pulse">SCANNING</span></div>
+                                            <div class="text-zinc-400 text-xs">MODE: AR_MENTOR</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none px-8">
+                                        <div class="w-48 h-64 border border-dashed border-brand-honeydew-medium/30 rounded-xl relative flex flex-col items-center justify-center p-4">
+                                            <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-brand-honeydew-medium"></div>
+                                            <div class="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-brand-honeydew-medium"></div>
+                                            <div class="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-brand-honeydew-medium"></div>
+                                            <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-brand-honeydew-medium"></div>
+                                            <div class="absolute top-3 left-3 bg-black/70 backdrop-blur-md px-2 py-1 rounded text-[8px] font-mono text-brand-honeydew-light border border-brand-honeydew-medium/20">
+                                                🔍 LOOK HERE
+                                            </div>
+                                            <div class="w-24 h-36 bg-zinc-800 rounded-lg border border-zinc-700 p-2 flex flex-col justify-between items-center shadow-inner ring-2 ring-brand-honeydew-medium/30">
+                                                <div class="flex gap-1.5 mt-1"><span class="w-2 h-4 bg-zinc-600 rounded-sm"></span><span class="w-2 h-4 bg-zinc-600 rounded-sm"></span><span class="w-2 h-4 bg-zinc-600 rounded-sm"></span></div>
+                                                <div class="text-[8px] font-mono text-zinc-500 text-center space-y-0.5"><div>DURARUN</div><div>45+5 µF</div><div>370 VAC</div></div>
+                                                <div class="w-full h-1 bg-zinc-900 rounded"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="relative z-10 bg-black/80 backdrop-blur-md p-3.5 rounded-xl border border-zinc-800 space-y-3 font-mono">
+                                        <div class="flex justify-between items-center text-xs border-b border-zinc-800 pb-2">
+                                            <span class="text-zinc-400">IDENTIFIED</span>
+                                            <span class="text-brand-honeydew-light font-bold">RUN CAPACITOR</span>
+                                        </div>
+                                        <div class="flex items-center justify-between text-[10px]">
+                                            <div class="bg-zinc-900/50 px-2 py-1 rounded border border-zinc-800 text-zinc-300">
+                                                <span class="text-zinc-500">STEP</span> 3 <span class="text-zinc-500">of 7</span>
+                                            </div>
+                                            <div class="bg-amber-900/20 text-amber-400 px-2 py-1 rounded border border-amber-800/30 flex items-center gap-1">
+                                                <span>&#9888;&#65039;</span> Safety
+                                            </div>
+                                        </div>
+                                        <div class="bg-zinc-900/50 p-2 rounded border border-zinc-800 text-[10px] space-y-1">
+                                            <div class="text-brand-honeydew-light font-bold">Discharge the capacitor</div>
+                                            <div class="text-zinc-400">Use a 20k&#8486; resistor across C and HERM. Wait 30 seconds for full discharge.</div>
+                                        </div>
+                                        <div class="flex items-center gap-2 text-[9px] text-zinc-500 border-t border-zinc-800 pt-2">
+                                            <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                                            <span>Look here — terminal marked "C"</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== HOW IT WORKS ========== -->
+        <section id="how-it-works" class="py-24 bg-zinc-50 border-b border-zinc-100">
+            <div class="container mx-auto px-6">
+                <div class="text-center max-w-2xl mx-auto mb-20 space-y-4">
+                    <h2 class="font-display text-3xl sm:text-4xl tracking-tight text-zinc-900">AR mentorship on real equipment.</h2>
+                    <p class="text-lg text-zinc-500">New techs learn by doing — with a senior technician's knowledge delivered right where they're looking.</p>
+                    <div class="h-1 w-16 bg-brand-lilac mx-auto rounded-full"></div>
+                </div>
+                <div class="grid md:grid-cols-3 gap-8 lg:gap-12">
+                    <div class="tilt-card reveal-hidden bg-white p-8 rounded-2xl border border-zinc-150 shadow-sm hover:shadow-md transition-all group cursor-default" data-tilt>
+                        <div class="flex items-center justify-between mb-6">
+                            <span class="font-mono text-xs font-semibold text-brand-lilac-dark tracking-wider bg-brand-honeydew-light px-3 py-1 rounded-full border border-brand-honeydew-medium">STEP 01</span>
+                            <div class="w-10 h-10 rounded-xl bg-zinc-50 flex items-center justify-center text-lg text-zinc-600 border border-zinc-100 group-hover:scale-110 transition-transform">📷</div>
+                        </div>
+                        <h3 class="font-display text-xl text-zinc-900 mb-3">Point at the component</h3>
+                        <p class="text-zinc-500 leading-relaxed">Open FieldLens on any phone, laptop, or AR device — point the camera at any HVAC part. An on-device AR detector locks onto it in real time. No typing, no manuals.</p>
+                    </div>
+                    <div class="tilt-card reveal-hidden bg-white p-8 rounded-2xl border border-zinc-150 shadow-sm hover:shadow-md transition-all group cursor-default" data-tilt>
+                        <div class="flex items-center justify-between mb-6">
+                            <span class="font-mono text-xs font-semibold text-brand-lilac-dark tracking-wider bg-brand-honeydew-light px-3 py-1 rounded-full border border-brand-honeydew-medium">STEP 02</span>
+                            <div class="w-10 h-10 rounded-xl bg-zinc-50 flex items-center justify-center text-lg text-zinc-600 border border-zinc-100 group-hover:scale-110 transition-transform">📋</div>
+                        </div>
+                        <h3 class="font-display text-xl text-zinc-900 mb-3">FieldLens identifies it</h3>
+                        <p class="text-zinc-500 leading-relaxed">Tap to freeze the frame. FieldLens returns the component name, a description, and a complete service walkthrough — ready to follow.</p>
+                    </div>
+                    <div class="tilt-card reveal-hidden bg-white p-8 rounded-2xl border border-zinc-150 shadow-sm hover:shadow-md transition-all group cursor-default" data-tilt>
+                        <div class="flex items-center justify-between mb-6">
+                            <span class="font-mono text-xs font-semibold text-brand-lilac-dark tracking-wider bg-brand-honeydew-light px-3 py-1 rounded-full border border-brand-honeydew-medium">STEP 03</span>
+                            <div class="w-10 h-10 rounded-xl bg-zinc-50 flex items-center justify-center text-lg text-zinc-600 border border-zinc-100 group-hover:scale-110 transition-transform">🎯</div>
+                        </div>
+                        <h3 class="font-display text-xl text-zinc-900 mb-3">Follow the guidance</h3>
+                        <p class="text-zinc-500 leading-relaxed">Step-by-step walkthrough with "look here" spotlighting — highlighting the exact region for each step. Safety notes called out at every step, all visible through the AR overlay.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== LIVE ACTIVITY FEED (Wow Factor) ========== -->
+        <section class="py-24 bg-zinc-950 border-b border-zinc-800 overflow-hidden relative">
+            <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(172,146,166,0.05),transparent_70%)]"></div>
+            <div class="container mx-auto px-6 relative">
+                <div class="grid lg:grid-cols-12 gap-12 items-center">
+                    <div class="lg:col-span-4 space-y-6">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 text-xs font-semibold rounded-full bg-zinc-900 text-brand-honeydew-light border border-zinc-800">
+                            <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0"></span>
+                            AR Mentorship Active
+                        </div>
+                        <h2 class="font-display text-3xl sm:text-4xl tracking-tight text-white">AR mentorship at scale.</h2>
+                        <p class="text-zinc-400 text-lg">Apprentice techs learn on real equipment — with AR-guided, safety-first walkthroughs delivered in real time. Every scan improves the next.</p>
+                        <ul class="space-y-3 text-sm text-zinc-400">
+                            <li class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                <span>Instant part identification from real equipment — even dirty or faded labels</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                <span>Per-step "look here" spotlighting — never guess where to inspect or work</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                <span>Runs in any browser or AR device — zero install, on the hardware a tech already carries</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="lg:col-span-8">
+                        <div class="bg-zinc-900/80 backdrop-blur-sm rounded-2xl border border-zinc-800/50 overflow-hidden shadow-2xl">
+                            <div class="flex items-center justify-between px-6 py-3 border-b border-zinc-800/50">
+                                <div class="flex items-center gap-3">
+                                    <div class="flex gap-1.5">
+                                        <div class="w-2.5 h-2.5 rounded-full bg-red-400"></div>
+                                        <div class="w-2.5 h-2.5 rounded-full bg-yellow-400"></div>
+                                        <div class="w-2.5 h-2.5 rounded-full bg-green-400"></div>
+                                    </div>
+                                    <span class="text-xs font-mono text-zinc-500">terminal@fieldlens ~ guidance_feed</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                                    <span class="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">Online</span>
+                                </div>
+                            </div>
+                            <div class="p-6 space-y-2 font-mono text-xs overflow-hidden" id="live-feed">
+                                <div class="flex items-start gap-3 text-zinc-400 opacity-60"><span class="text-zinc-600 shrink-0">[10:23:41]</span><span class="text-green-400 shrink-0">[OK]</span><span>Capacitor RUN_CAP_01 → guidance generated: 7 steps + safety notes</span></div>
+                                <div class="flex items-start gap-3 text-zinc-400 opacity-60"><span class="text-zinc-600 shrink-0">[10:23:38]</span><span class="text-green-400 shrink-0">[OK]</span><span>Contactor CONT_24V_02 → walkthrough ready: step 3 of 6</span></div>
+                                <div class="flex items-start gap-3 text-zinc-400"><span class="text-zinc-600 shrink-0">[10:23:35]</span><span class="text-yellow-400 shrink-0">[WARN]</span><span class="text-zinc-300">Compressor COMP_R410_03 → safety note: verify capacitor discharge before service</span></div>
+                                <div class="flex items-start gap-3 text-zinc-400"><span class="text-zinc-600 shrink-0">[10:23:32]</span><span class="text-green-400 shrink-0">[OK]</span><span>Thermostat TSTAT_24V_01 → identified: 24V 1H/1C, walkthrough ready</span></div>
+                                <div class="flex items-start gap-3 text-zinc-400"><span class="text-zinc-600 shrink-0">[10:23:29]</span><span class="text-green-400 shrink-0">[OK]</span><span>Capacitor RUN_CAP_04 → guidance generated: 7 steps with look-here highlights</span></div>
+                                <div class="flex items-start gap-3 text-zinc-400"><span class="text-zinc-600 shrink-0">[10:23:26]</span><span class="text-green-400 shrink-0">[OK]</span><span>Fan Motor FAN_1_3HP → walkthrough ready: step 1 of 8 — "Locate the run capacitor"</span></div>
+                                <div class="flex items-start gap-3 text-zinc-400"><span class="text-zinc-600 shrink-0">[10:23:22]</span><span class="text-yellow-400 shrink-0">[WARN]</span><span class="text-zinc-300">Contactor CONT_30A_01 → safety note: verify power disconnect before proceeding</span></div>
+                                <div class="flex items-start gap-3 text-zinc-400"><span class="text-zinc-600 shrink-0">[10:23:19]</span><span class="text-green-400 shrink-0">[OK]</span><span>Blower Motor BLO_1_2HP → guidance generated: 6 steps with safety notes</span></div>
+                                <div class="flex items-start gap-3 text-zinc-400"><span class="text-zinc-600 shrink-0">[10:23:15]</span><span class="text-green-400 shrink-0">[OK]</span><span>Condenser COND_3TON → identified, walkthrough: step 4 of 10</span></div>
+                            </div>
+                            <div class="px-6 py-3 border-t border-zinc-800/50 flex items-center gap-3">
+                                <div class="w-2 h-2 rounded-full bg-brand-honeydew-light animate-ping"></div>
+                                <span class="text-xs font-mono text-zinc-500">Private beta — verified end-to-end on phone, laptop, and AR</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== HOW IT WORKS (TECH) placeholder ========== -->
+
+        <!-- ========== FORM FACTOR ========== -->
+        <section id="form-factor" class="py-24 bg-white border-b border-zinc-100">
+            <div class="container mx-auto px-6">
+                <div class="text-center max-w-3xl mx-auto mb-20 space-y-6">
+                    <h2 class="font-display text-4xl sm:text-5xl lg:text-6xl tracking-tight text-zinc-900">Zero-install AR. On any device.</h2>
+                    <p class="text-xl sm:text-2xl text-zinc-500 leading-relaxed">No app store. No special hardware. Just a browser and a camera — and a senior technician's knowledge in view.</p>
+                    <div class="h-1.5 w-20 bg-brand-lilac mx-auto rounded-full"></div>
+                </div>
+                <div class="max-w-2xl mx-auto">
+                    <div class="space-y-8 flex flex-col items-center text-center reveal-hidden">
+                        <div class="space-y-3">
+                            <h3 class="font-display text-2xl text-zinc-900">Phone, laptop, or AR glasses. Any browser.</h3>
+                            <p class="text-zinc-500 text-lg">FieldLens works in any browser or AR-capable device — on hardware a tech already carries.</p>
+                        </div>
+                        <div class="relative w-full max-w-[450px]">
+                            <div class="absolute -inset-2 rounded-2xl bg-gradient-to-tr from-brand-honeydew-light to-brand-lilac/20 blur-lg opacity-60"></div>
+                            <div class="relative w-full aspect-video bg-zinc-900 rounded-2xl border border-zinc-800 shadow-xl overflow-hidden p-4 transition-transform hover:scale-[1.02]">
+                                <div class="relative w-full h-full bg-zinc-950 rounded-xl overflow-hidden flex flex-col justify-between p-4 border border-zinc-800">
+                                    <div class="flex justify-between items-start text-[9px] font-mono text-white">
+                                        <div class="bg-brand-honeydew-light/10 text-brand-honeydew-light px-2 py-1 rounded border border-brand-honeydew-medium/20">AR v1.0</div>
+                                        <div class="text-right text-zinc-500">MENTOR MODE</div>
+                                    </div>
+                                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                        <div class="relative w-full h-full">
+                                            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 border border-brand-honeydew-medium/30 rounded-full pulse-glow flex items-center justify-center">
+                                                <div class="w-2 h-2 rounded-full bg-brand-honeydew-medium"></div>
+                                            </div>
+                                            <div class="absolute top-[55%] left-[55%] bg-black/70 backdrop-blur-md p-2.5 rounded-lg border border-brand-lilac/30 text-[10px] font-mono text-white space-y-1">
+                                                <div class="font-bold text-brand-honeydew-light">STEP 3 OF 7</div>
+                                                <div class="text-zinc-400">Discharge capacitor</div>
+                                                <div class="text-amber-400 text-[8px]">&#9888;&#65039; Safety — verify power off</div>
+                                            </div>
+                                            <div class="absolute bottom-[15%] left-[20%] bg-black/70 backdrop-blur-md p-2.5 rounded-lg border border-brand-honeydew-medium/20 text-[10px] font-mono text-white">
+                                                <div class="text-zinc-400">LOOK HERE</div>
+                                                <div class="text-brand-honeydew-light font-bold">Terminal "C"</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between items-center text-[9px] font-mono text-zinc-400 border-t border-zinc-900 pt-2 relative z-10"><span>AR: ACTIVE</span><span>IDENTIFIED: RUN CAPACITOR</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== FAQ ========== -->
+        <section id="faq" class="py-24 bg-white border-b border-zinc-100">
+            <div class="container mx-auto px-6">
+                <div class="text-center max-w-2xl mx-auto mb-16 space-y-4">
+                    <h2 class="font-display text-3xl sm:text-4xl tracking-tight text-zinc-900">Got Questions?</h2>
+                    <p class="text-lg text-zinc-500">Answers to common questions about fieldlens</p>
+                    <div class="h-1 w-16 bg-brand-lilac mx-auto rounded-full"></div>
+                </div>
+                <div class="max-w-2xl mx-auto space-y-4">
+                    <div class="border border-zinc-200 rounded-lg overflow-hidden faq-item">
+                        <button class="faq-toggle w-full flex items-center justify-between p-6 text-zinc-800 font-medium bg-white hover:bg-zinc-50 transition-colors" aria-expanded="false">
+                            <span class="text-left">How does FieldLens identify components?</span>
+                            <svg class="w-4 h-4 faq-icon flex-shrink-0 ml-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7l-7-7"/></svg>
+                        </button>
+                        <div class="faq-panel px-6 text-zinc-600"><p class="pb-4">FieldLens uses a two-tier vision system purpose-built for the trades. First, a fast on-device detector runs in real time inside your browser — locating the component in your camera feed without sending anything to a server. When you tap to identify, a frame is sent for analysis, and FieldLens returns the component name, description, and a complete step-by-step walkthrough. Per-step "look here" regions are mapped directly onto your frozen camera frame, so you always know exactly where to inspect. You're in control: nothing leaves your device until you choose to tap.</p></div>
+                    </div>
+                    <div class="border border-zinc-200 rounded-lg overflow-hidden faq-item">
+                        <button class="faq-toggle w-full flex items-center justify-between p-6 text-zinc-800 font-medium bg-white hover:bg-zinc-50 transition-colors" aria-expanded="false">
+                            <span class="text-left">Does it work in low light or with dirty labels?</span>
+                            <svg class="w-4 h-4 faq-icon flex-shrink-0 ml-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7l-7-7"/></svg>
+                        </button>
+                        <div class="faq-panel px-6 text-zinc-600"><p class="pb-4">Yes, and this is a core design requirement — not a nice-to-have. HVAC equipment lives in basements, rooftops, mechanical rooms, and crawl spaces. FieldLens is built to handle all of it: low light, dirty or faded labels, awkward viewing angles, and greasy components. The on-device detector is optimized for real-world field conditions, not sterile lab environments. If you can see it with your eyes, FieldLens can work with it.</p></div>
+                    </div>
+                    <div class="border border-zinc-200 rounded-lg overflow-hidden faq-item">
+                        <button class="faq-toggle w-full flex items-center justify-between p-6 text-zinc-800 font-medium bg-white hover:bg-zinc-50 transition-colors" aria-expanded="false">
+                            <span class="text-left">Is my data private and secure?</span>
+                            <svg class="w-4 h-4 faq-icon flex-shrink-0 ml-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7l-7-7"/></svg>
+                        </button>
+                        <div class="faq-panel px-6 text-zinc-600"><p class="pb-4">Privacy is a first-class constraint, not an afterthought. The on-device AR detector runs entirely on your phone or laptop — no camera data ever leaves your device during scanning. A single frozen frame is sent for identification only when you explicitly tap the screen. The API key is held server-side and never exposed to the client. There are no accounts, no stored job data, and no scan history in the current build. We designed FieldLens this way so contractors can deploy it without worrying about liability.</p></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== BOTTOM CTA ========== -->
+        <section class="py-24 bg-brand-honeydew-light border-b border-brand-honeydew-medium">
+            <div class="container mx-auto px-6 max-w-3xl text-center space-y-8">
+                <h2 class="font-display text-3xl sm:text-4xl tracking-tight text-zinc-900 leading-tight">110,000 technicians short — and every new one needs a mentor.</h2>
+                <p class="text-lg text-zinc-600">FieldLens makes mentorship scalable. Join the waitlist for early beta access.</p>
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    <button onclick="scrollToWaitlist()" class="bg-brand-lilac hover:bg-brand-lilac-dark text-white font-medium py-4 px-10 rounded-xl transition-all hover:shadow-lg active:scale-95 text-base magnetic-btn">Join Waitlist</button>
+                    <a href="#how-it-works" class="inline-flex items-center justify-center bg-white hover:bg-zinc-50 border border-zinc-200 text-zinc-800 font-medium py-4 px-10 rounded-xl transition-all active:scale-95 text-base magnetic-btn">See How It Works</a>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ========== FOOTER ========== -->
+    <footer class="bg-zinc-50 border-t border-zinc-150 py-16 text-zinc-500 text-sm">
+        <div class="container mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-8 border-b border-zinc-200 pb-12">
+                <div class="space-y-2 text-center md:text-left">
+                    <span class="font-display text-lg text-zinc-900">fieldlens</span>
+                    <p class="text-xs text-zinc-400 max-w-xs">AR-powered training and guidance for next-generation HVAC technicians.</p>
+                </div>
+                <div class="flex flex-wrap justify-center gap-8 text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                    <a href="#how-it-works" class="hover:text-zinc-900 transition-colors">How It Works</a>
+                    <a href="#form-factor" class="hover:text-zinc-900 transition-colors">Compatibility</a>
+                    <button onclick="scrollToWaitlist()" type="button" class="hover:text-zinc-900 transition-colors cursor-pointer bg-transparent border-none p-0 uppercase">Waitlist</button>
+                </div>
+            </div>
+            <div class="flex flex-col sm:flex-row justify-between items-center pt-8 gap-4 text-xs">
+                <p>&copy; 2026 fieldlens. All rights reserved. AR-guided training for HVAC technicians.</p>
+                <div class="flex gap-6 text-zinc-400">
+                    <a href="#" class="hover:text-zinc-900 transition-colors">Privacy Policy</a>
+                    <a href="#" class="hover:text-zinc-900 transition-colors">Terms of Service</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Show success state if returning from FormSubmit
+ (function() {
+   if (window.location.search.includes('success=true')) {
+     var fc = document.getElementById('form-container');
+     var sc = document.getElementById('success-container');
+     if (fc && sc) { fc.classList.add('hidden'); sc.classList.remove('hidden'); }
+     window.history.replaceState({}, '', window.location.pathname);
+   }
+ })();
+
+ /* --- Scroll Progress Bar --- */
+        const progressBar = document.getElementById('scroll-progress-bar');
+        window.addEventListener('scroll', () => {
+            const scrollTop = window.scrollY || document.documentElement.scrollTop;
+            const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrollPercent = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+            progressBar.style.width = scrollPercent + '%';
+        });
+
+        /* --- Scroll Reveal with IntersectionObserver (animate once only) --- */
+        (function() {
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px 0px -10% 0px',
+                threshold: 0.1
+            };
+
+            let revealCount = 0;
+
+            // Track which elements have already animated so classes never re-trigger
+            const animated = new Set();
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (!entry.isIntersecting || animated.has(entry.target)) return;
+
+                    // Lock immediately — never allow re-trigger
+                    animated.add(entry.target);
+                    observer.unobserve(entry.target);
+
+                    // Stagger animation delay
+                    entry.target.style.animationDelay = (revealCount++ % 4) * 0.2 + 's';
+
+                    // Trigger once — class stays, animation plays once via forwards, never replays
+                    entry.target.classList.remove('reveal-hidden');
+                    entry.target.classList.add('reveal-visible');
+                });
+            }, observerOptions);
+
+            // Observe all elements that should reveal on scroll (animate once only)
+            document.querySelectorAll('.reveal-hidden').forEach(el => {
+                observer.observe(el);
+            });
+
+            console.log('[Reveal] Scroll reveal configured: ONCE ONLY (v3)');
+        })();
+
+        /* --- Hero Headline Word Reveal --- */
+        (function() {
+            const headline = document.getElementById('hero-headline');
+            if (!headline) return;
+            const text = headline.innerText;
+            headline.innerHTML = '';
+            const words = text.split(' ');
+            words.forEach((word, i) => {
+                const wrapper = document.createElement('span');
+                wrapper.className = 'reveal-word';
+                const inner = document.createElement('span');
+                inner.innerText = word;
+                wrapper.appendChild(inner);
+                headline.appendChild(wrapper);
+                if (i < words.length - 1) {
+                    headline.appendChild(document.createTextNode(' '));
+                }
+                setTimeout(() => {
+                    wrapper.classList.add('visible');
+                }, 100 + i * 60);
+            });
+        })();
+
+        /* --- 3D Tilt Cards --- */
+        (function() {
+            const cards = document.querySelectorAll('.tilt-card');
+            cards.forEach(card => {
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+                    const rotateX = ((y - centerY) / centerY) * -6;
+                    const rotateY = ((x - centerX) / centerX) * 6;
+                    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+                });
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
+                });
+            });
+        })();
+
+        /* --- Magnetic Buttons --- */
+        (function() {
+            const buttons = document.querySelectorAll('.magnetic-btn');
+            buttons.forEach(btn => {
+                btn.addEventListener('mousemove', (e) => {
+                    const rect = btn.getBoundingClientRect();
+                    const x = e.clientX - rect.left - rect.width / 2;
+                    const y = e.clientY - rect.top - rect.height / 2;
+                    btn.style.transform = `translate(${x * 0.2}px, ${y * 0.2}px)`;
+                });
+                btn.addEventListener('mouseleave', () => {
+                    btn.style.transform = 'translate(0, 0)';
+                });
+            });
+        })();
+
+        /* --- FAQ Accordion --- */
+        (function() {
+            const toggles = document.querySelectorAll('.faq-toggle');
+            toggles.forEach(t => {
+                t.addEventListener('click', () => {
+                    const item = t.parentElement;
+                    const isOpen = item.classList.contains('open');
+                    document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+                    if (!isOpen) item.classList.add('open');
+                    t.setAttribute('aria-expanded', !isOpen);
+                });
+            });
+        })();
+
+        function scrollToWaitlist() {
+            const s = document.getElementById('waitlist-section');
+            s.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => { s.classList.add('ring-4', 'ring-brand-lilac/30', 'border-brand-lilac'); document.getElementById('email').focus(); }, 600);
+            setTimeout(() => { s.classList.remove('ring-4', 'ring-brand-lilac/30', 'border-brand-lilac'); }, 2500);
+        }
+
+/* --- Custom Cursor --- */
+        (function() {
+            const cursor = document.getElementById('custom-cursor');
+            if (!cursor) return;
+            let mouseX = 0, mouseY = 0, cursorX = 0, cursorY = 0;
+            if (window.matchMedia('(pointer: coarse)').matches) return;
+            document.addEventListener('mousemove', (e) => { mouseX = e.clientX; mouseY = e.clientY; });
+            function animateCursor() {
+                cursorX += (mouseX - cursorX) * 0.4;
+                cursorY += (mouseY - cursorY) * 0.4;
+                cursor.style.left = cursorX + 'px';
+                cursor.style.top = cursorY + 'px';
+                requestAnimationFrame(animateCursor);
+            }
+            animateCursor();
+            const interactiveElems = 'a, button, input, select, textarea, .tilt-card, .magnetic-btn';
+            document.querySelectorAll(interactiveElems).forEach(el => {
+                el.addEventListener('mouseenter', () => cursor.classList.add('expanded'));
+                el.addEventListener('mouseleave', () => cursor.classList.remove('expanded'));
+            });
+        })();
+
+        /* --- Scroll-based Parallax for Hero Mockup --- */
+        (function() {
+            const mockup = document.querySelector('.ar-parallax-wrap');
+            if (!mockup) return;
+            let lastScroll = 0;
+            window.addEventListener('scroll', () => {
+                const scrollY = window.scrollY || window.pageYOffset;
+                const speed = 0.15;
+                const yPos = scrollY * speed;
+                mockup.style.transform = `translateY(${yPos}px)`;
+                lastScroll = scrollY;
+            }, { passive: true });
+        })();
+
+        /* --- Live Activity Feed Simulation --- */
+        (function() {
+            const feed = document.getElementById('live-feed');
+            if (!feed) return;
+
+            const partTypes = [
+                { type: 'Capacitor', code: 'RUN_CAP', steps: '7 steps + safety notes' },
+                { type: 'Capacitor', code: 'DUAL_CAP', steps: '6 steps with look-here highlights' },
+                { type: 'Contactor', code: 'CONT', steps: 'walkthrough: step 3 of 6' },
+                { type: 'Contactor', code: 'CONT_30A', steps: 'walkthrough: step 5 of 6' },
+                { type: 'Fan Motor', code: 'FAN_1_3HP', steps: 'step 1 of 8 — locate the capacitor' },
+                { type: 'Fan Motor', code: 'FAN_1_2HP', steps: 'step 4 of 8 — check windings' },
+                { type: 'Compressor', code: 'COMP_R410', steps: 'walkthrough ready: 10 steps' },
+                { type: 'Compressor', code: 'COMP_R22', steps: 'walkthrough ready: 12 steps' },
+                { type: 'Thermostat', code: 'TSTAT', steps: 'identified: 24V 1H/1C' },
+                { type: 'Blower Motor', code: 'BLO', steps: 'guidance generated: 6 steps' },
+                { type: 'Condenser', code: 'COND', steps: 'walkthrough: step 4 of 10' },
+                { type: 'Relay', code: 'RELAY_24V', steps: 'guidance ready: 4 steps' },
+            ];
+            const safetyNotes = ['verify capacitor discharge before service', 'verify power disconnect before proceeding', 'check for charged capacitors', 'confirm gas line is sealed', 'wear PPE — live electrical hazard'];
+
+            function formatTime(date) {
+                return date.toTimeString().slice(0, 8);
+            }
+
+            function addFeedEntry() {
+                const part = partTypes[Math.floor(Math.random() * partTypes.length)];
+                const isSafetyNote = Math.random() < 0.25;
+                const now = new Date();
+                const entry = document.createElement('div');
+                entry.className = 'flex items-start gap-3';
+                if (Math.random() > 0.5) {
+                    entry.classList.add('text-zinc-400');
+                } else {
+                    entry.classList.add('text-zinc-300');
+                }
+
+                if (isSafetyNote) {
+                    const note = safetyNotes[Math.floor(Math.random() * safetyNotes.length)];
+                    entry.innerHTML = `<span class="text-zinc-600 shrink-0">[${formatTime(now)}]</span><span class="text-yellow-400 shrink-0">[SAFETY]</span><span class="text-zinc-300">${part.type} ${part.code} → ${note}</span>`;
+                } else {
+                    entry.innerHTML = `<span class="text-zinc-600 shrink-0">[${formatTime(now)}]</span><span class="text-green-400 shrink-0">[OK]</span><span>${part.type} ${part.code} → guidance generated, ${part.steps}</span>`;
+                }
+
+                feed.insertBefore(entry, feed.firstChild);
+                if (feed.children.length > 9) {
+                    feed.lastChild.remove();
+                }
+            }
+
+            setInterval(addFeedEntry, 4000);
+        })();
+        /* --- Debug: press 'r' to force all reveals --- */
+        document.addEventListener('keydown', (e) => {
+            if (['r','R'].includes(e.key)) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('[DEBUG] Key "r/R" detected - forcing reveals');
+                document.querySelectorAll('.reveal-hidden:not(.reveal-visible)').forEach(el => {
+                    el.classList.add('reveal-visible');
+                    console.log('[DEBUG] Force-revealed', el.className.slice(0, 40));
+                });
+            }
+            if (['d','D'].includes(e.key)) {
+                e.preventDefault();
+                e.stopPropagation();
+                window.revealDebug = !window.revealDebug;
+                console.log('[DEBUG] Reveal logging', window.revealDebug ? 'ON' : 'OFF');
+            }
+        });
+        console.log('[DEBUG] r-key handler attached');
+    </script>
+
+</body>
+</html>
