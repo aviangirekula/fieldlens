@@ -27,8 +27,8 @@ export default function App() {
   const [walkthrough, setWalkthrough] = useState<WalkthroughData | null>(null)
   const [genError, setGenError] = useState<string | null>(null)
 
-  // The captured/uploaded frame is frozen here and guided over with per-step
-  // region highlights. Cleared (back to live) when the session ends.
+  // The captured/uploaded frame is frozen here and guided over. Cleared (back
+  // to live) when the session ends.
   const [frozenUrl, setFrozenUrl] = useState<string | null>(null)
   const [frozenDims, setFrozenDims] = useState<{ w: number; h: number } | null>(
     null,
@@ -148,13 +148,13 @@ export default function App() {
     setCompleted(false)
   }
 
-  // Which region to spotlight: the current step's box, falling back to the
-  // overall component box; on completion, show the component overview.
+  // Which region to highlight: current step's box, falling back to overall
+  // component box on completion.
   const activeBox = !walkthrough
     ? null
     : completed
       ? walkthrough.box
-      : (walkthrough.steps[stepIndex]?.box ?? walkthrough.box)
+      : (walkthrough.steps[stepIndex]?.box ?? null)
 
   return (
     <div className="stage">
@@ -178,7 +178,7 @@ export default function App() {
       {/* Live detection overlay — only active while identifying. */}
       <canvas ref={canvasRef} className="detect-canvas" />
 
-      {/* Per-step "look here" spotlight over the frozen frame. */}
+      {/* Per-step highlight over the frozen frame. */}
       {genStatus === 'ready' && frozenDims && (
         <RegionHighlight
           naturalW={frozenDims.w}
@@ -290,8 +290,8 @@ export default function App() {
         <div className="gen">
           <div className="spinner" />
           <p className="gen__text">
-            Analyzing component…
-            <span className="gen__sub">Generating AI training guidance</span>
+            Reading the component…
+            <span className="gen__sub">Building your inspection drill</span>
           </p>
         </div>
       )}

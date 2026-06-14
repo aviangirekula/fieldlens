@@ -490,13 +490,28 @@
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 20px 22px calc(24px + var(--safe-bottom));
+  display: flex;
+  flex-direction: column;
+  max-height: min(82vh, 720px);
+  padding: 20px 22px calc(18px + var(--safe-bottom));
   background: rgba(17, 19, 23, 0.95);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 22px 22px 0 0;
   box-shadow: 0 -14px 48px rgba(0, 0, 0, 0.55);
+}
+
+.wt__body {
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 2px;
+  padding-bottom: 6px;
+}
+
+.wt__body--complete {
+  overflow: visible;
 }
 
 .wt__bar {
@@ -559,11 +574,154 @@
   letter-spacing: -0.01em;
 }
 
-.wt__instruction {
+.wt__instruction,
+.wt__goal {
   margin: 10px 0 0;
   font-size: 1.06rem;
   line-height: 1.5;
   color: #dce0e7;
+}
+
+.wt__goal {
+  font-size: 0.92rem;
+  color: #9aa2af;
+}
+
+.wt__verdict {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 6px 44px 12px 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.wt__verdict-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+  flex: none;
+}
+
+.wt__verdict-label {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.wt__verdict-detail {
+  margin: 4px 0 0;
+  color: #dce0e7;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.wt__safety-summary {
+  margin: 0 0 14px;
+  padding: 0 2px;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: #c4c9d2;
+}
+
+.wt__verdict--safe {
+  background: rgba(34, 224, 107, 0.12);
+  border-color: rgba(34, 224, 107, 0.34);
+}
+.wt__verdict--safe .wt__verdict-label {
+  color: #8df7b5;
+}
+
+.wt__verdict--caution,
+.wt__verdict--unknown {
+  background: rgba(255, 176, 32, 0.13);
+  border-color: rgba(255, 176, 32, 0.35);
+}
+.wt__verdict--caution .wt__verdict-label,
+.wt__verdict--unknown .wt__verdict-label {
+  color: #ffd591;
+}
+
+.wt__verdict--danger {
+  background: rgba(255, 75, 85, 0.16);
+  border-color: rgba(255, 75, 85, 0.42);
+}
+.wt__verdict--danger .wt__verdict-label {
+  color: #ff9ca3;
+}
+
+.wt__action-card {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  margin: 12px 0;
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(34, 224, 107, 0.08);
+  border: 1px solid rgba(34, 224, 107, 0.2);
+}
+
+.wt__action-num {
+  display: grid;
+  place-items: center;
+  min-width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #22e06b;
+  color: #04210f;
+  font-size: 1rem;
+  font-weight: 800;
+  flex: none;
+}
+
+.wt__action-title {
+  margin: 0;
+  font-size: 1.1rem;
+  line-height: 1.25;
+}
+
+.wt__action-text {
+  margin: 6px 0 0;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  color: #eef2f7;
+}
+
+.wt__check-row {
+  margin: 10px 0 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.wt__check-row p {
+  margin: 0;
+  color: #eef2f7;
+  line-height: 1.45;
+  font-size: 0.95rem;
+}
+
+.wt__check-row--expect {
+  background: rgba(34, 224, 107, 0.06);
+  border-color: rgba(34, 224, 107, 0.15);
+}
+
+.wt__check-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8df7b5;
+}
+
+.wt__why {
+  margin: 10px 0 0;
+  font-size: 0.88rem;
+  color: #8b93a1;
+  line-height: 1.45;
 }
 
 .wt__safety {
@@ -592,10 +750,46 @@
   color: #ffe0a6;
 }
 
+.wt__evidence {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.wt__evidence-title {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8b93a1;
+}
+
+.wt__evidence ul {
+  margin: 0;
+  padding-left: 18px;
+  color: #c4c9d2;
+  font-size: 0.84rem;
+  line-height: 1.42;
+}
+
+.wt__evidence li + li {
+  margin-top: 4px;
+}
+
 .wt__controls {
+  flex: none;
   display: flex;
   gap: 12px;
-  margin-top: 22px;
+  margin: 14px -2px 0;
+  padding-top: 12px;
+  background:
+    linear-gradient(rgba(17, 19, 23, 0), rgba(17, 19, 23, 0.98) 22%),
+    rgba(17, 19, 23, 0.95);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 .wt__btn {
   flex: 1;
@@ -660,9 +854,8 @@
     top: 0;
     bottom: 0;
     width: 400px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    max-height: none;
+    justify-content: stretch;
     border-radius: 22px 0 0 22px;
     border-top: none;
     border-left: 1px solid rgba(255, 255, 255, 0.12);
@@ -883,7 +1076,7 @@
   background: #000;
 }
 
-/* Per-step "look here" spotlight, cover-mapped to align with .frozen. */
+/* Per-step highlight, cover-mapped to align with .frozen. */
 .region {
   position: absolute;
   inset: 0;

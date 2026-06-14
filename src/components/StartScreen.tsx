@@ -4,9 +4,9 @@ interface StartScreenProps {
 }
 
 const STEPS = [
-  { n: 1, label: 'Point at a component' },
-  { n: 2, label: 'Identify it' },
-  { n: 3, label: 'Guided training walkthrough' },
+  { n: 1, label: 'Point at equipment' },
+  { n: 2, label: 'See the safety verdict' },
+  { n: 3, label: 'Follow the drill' },
 ]
 
 export function StartScreen({ onStart, onUpload }: StartScreenProps) {
@@ -24,8 +24,9 @@ export function StartScreen({ onStart, onUpload }: StartScreenProps) {
         </div>
 
         <p className="start__tagline">
-          AR training assistant for HVAC technicians — learn on the equipment,
-          hands-free.
+          AR training assistant for HVAC technicians. Point at any component,
+          get an instant safety verdict, and walk through the inspection
+          step by step — hands-free.
         </p>
 
         <ol className="start__how">
@@ -49,8 +50,9 @@ export function StartScreen({ onStart, onUpload }: StartScreenProps) {
           Upload a photo instead
         </button>
         <p className="start__note">
-          Uses your device camera. When you tap a component or upload a photo,
-          that image is sent to Google Gemini to generate AI training guidance.
+          Uses your camera or a photo. FieldLens identifies the component,
+          calls out visible risks, and walks you through the inspection
+          like a trainer standing beside you.
         </p>
       </div>
     </div>

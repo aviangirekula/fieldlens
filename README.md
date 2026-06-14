@@ -42,12 +42,12 @@ then tap a component (or **Upload a photo**).
 1. **Landing screen** → **Start** opens a full-screen live camera feed (rear
    camera by default on phones).
 2. **Tap a component** (or upload a photo) → the frame is captured and frozen.
-3. The frame is sent to **Gemini 2.5 Flash**, which returns the component name, a
-   description, a **4–7 step walkthrough** (title + instruction + safety note per
-   step), and a **bounding box per step**.
+3. The frame is sent to **Gemini 2.5 Flash**, which returns the component name,
+   a safety verdict, visible evidence, blind spots, a training goal, and a
+   **4–7 step inspection drill**.
 4. The walkthrough plays over the frozen frame: **Step X of Y**, progress bar,
-   Next/Back, highlighted safety notes, completion screen — and a **spotlight**
-   that dims everything except the region to look at for the current step.
+   Next/Back, safety notes, completion screen, optional region highlighting, and
+   concrete **Do / Check / Normal / Why** guidance for each step.
 
 ## Tech stack
 

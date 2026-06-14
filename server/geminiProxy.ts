@@ -23,19 +23,29 @@ const PROMPT = `You are an expert HVAC and electrical field-service trainer.
 
 Look at the image and:
 1. Identify the single main HVAC or electrical component shown.
-2. Create a concise step-by-step training walkthrough for a NEW technician learning to inspect and service that component safely.
+2. Decide whether a NEW technician can safely look at this, or whether they must stop and get a qualified supervisor.
+3. Create a step-by-step drill that tells the technician exactly what to do next — like a friend standing beside them saying "now do this".
 
 Rules:
-- Return between 4 and 7 steps.
-- Keep each "instruction" concise (one or two sentences) and action-oriented.
-- Put any safety-critical warning for a step in "safety_note". If a step has no safety concern, use an empty string "".
-- Include de-energizing / lockout-tagout guidance wherever it is electrically relevant.
-- "description" is one or two sentences describing the component.
-- For the overall component AND for each step, include a bounding box "box" locating the EXACT region in THIS image the technician should look at, formatted as [ymin, xmin, ymax, xmax] using integers from 0 to 1000 (origin at the top-left). If a step's region is not visible in the image, use an empty array [].
+- Write for someone who has never done this before and is nervous.
+- Use short, direct sentences. Every action should be so specific that the technician doesn't have to think. Example: "Find the two screws on the top cover. Turn each one counterclockwise with a #2 Phillips screwdriver." NOT "remove the cover".
+- Never say "inspect", "check", "verify", or "ensure" without saying exactly HOW and WHAT TO LOOK FOR.
+- Never tell the technician to touch, loosen, remove, or probe anything unless the step starts with confirmed lockout/tagout and zero-voltage verification.
+- If a task needs a tool, name the tool and where to put it. If you can't tell from the image, say "ask a qualified supervisor".
+- Keep every field under 20 words.
+- Start with safety. If you see energized conductors, exposed terminals, burn marks, or water, say "caution" or "do_not_touch".
+- "safety_verdict" must be one of: "safe_to_inspect", "caution", "do_not_touch", "unknown".
+- "confidence" must be one of: "high", "medium", "low".
+- "visible_evidence" is 2-4 short bullets naming what you can actually see.
+- "not_visible" is 2-4 short bullets naming things the image can't prove (power state, meter readings, wiring diagram).
+- Return 4-6 steps. Each step has: "title" (what this step is about), "action" (the exact next move), "check" (what to look at), "expected_result" (what normal looks like), "why" (why it matters), "safety_note" (warning or empty string "").
+- A good step reads like: "action": "Look at the top of the contactor. Find the terminals labeled L1, L2, L3.", "check": "The three top terminals.", "expected_result": "Three wires, one on each terminal, with no burn marks or loose connections.", "why": "Loose or burned terminals cause overheating and can start a fire."
+- "description" is one sentence about what this component does.
+- For the overall component AND for each step, include a bounding box "box" locating the EXACT visible region in THIS image the technician should look at, formatted as [ymin, xmin, ymax, xmax] using integers from 0 to 1000 (origin at the top-left). Tight boxes are better than large approximate boxes. If a step's region is not visible in the image, use an empty array [].
 - If the image does NOT clearly show an HVAC or electrical component, set "component" to "Unknown" and return an empty "steps" array.
 
 Respond with ONLY a JSON object of this exact shape:
-{"component": string, "description": string, "box": [ymin,xmin,ymax,xmax], "steps": [{"title": string, "instruction": string, "safety_note": string, "box": [ymin,xmin,ymax,xmax]}]}`
+{"component": string, "description": string, "safety_verdict": string, "safety_summary": string, "confidence": string, "training_goal": string, "visible_evidence": string[], "not_visible": string[], "box": [ymin,xmin,ymax,xmax], "steps": [{"title": string, "action": string, "check": string, "expected_result": string, "why": string, "safety_note": string, "box": [ymin,xmin,ymax,xmax]}]}`
 
 // Forces Gemini to emit JSON matching this shape (uppercase enum types per the
 // Gemini schema spec). Belt-and-suspenders with the text-stripping parser below.
@@ -46,6 +56,12 @@ const RESPONSE_SCHEMA = {
   properties: {
     component: { type: 'STRING' },
     description: { type: 'STRING' },
+    safety_verdict: { type: 'STRING' },
+    safety_summary: { type: 'STRING' },
+    confidence: { type: 'STRING' },
+    training_goal: { type: 'STRING' },
+    visible_evidence: { type: 'ARRAY', items: { type: 'STRING' } },
+    not_visible: { type: 'ARRAY', items: { type: 'STRING' } },
     box: BOX_SCHEMA,
     steps: {
       type: 'ARRAY',
@@ -53,15 +69,37 @@ const RESPONSE_SCHEMA = {
         type: 'OBJECT',
         properties: {
           title: { type: 'STRING' },
-          instruction: { type: 'STRING' },
+          action: { type: 'STRING' },
+          check: { type: 'STRING' },
+          expected_result: { type: 'STRING' },
+          why: { type: 'STRING' },
           safety_note: { type: 'STRING' },
           box: BOX_SCHEMA,
         },
-        required: ['title', 'instruction', 'safety_note', 'box'],
+        required: [
+          'title',
+          'action',
+          'check',
+          'expected_result',
+          'why',
+          'safety_note',
+          'box',
+        ],
       },
     },
   },
-  required: ['component', 'description', 'box', 'steps'],
+  required: [
+    'component',
+    'description',
+    'safety_verdict',
+    'safety_summary',
+    'confidence',
+    'training_goal',
+    'visible_evidence',
+    'not_visible',
+    'box',
+    'steps',
+  ],
 }
 
 interface Box {
@@ -72,6 +110,10 @@ interface Box {
 }
 interface NormalizedStep {
   title: string
+  action: string
+  check: string
+  expectedResult: string
+  why: string
   instruction: string
   safetyNote: string
   box: Box | null
@@ -79,13 +121,17 @@ interface NormalizedStep {
 interface Normalized {
   component: string
   description: string
+  safetyVerdict: 'safe_to_inspect' | 'caution' | 'do_not_touch' | 'unknown'
+  safetySummary: string
+  confidence: 'high' | 'medium' | 'low'
+  trainingGoal: string
+  visibleEvidence: string[]
+  notVisible: string[]
   box: Box | null
   steps: NormalizedStep[]
 }
 
-// Gemini returns boxes as [ymin, xmin, ymax, xmax] scaled 0–1000. Convert to a
-// normalized { x, y, w, h } in 0–1, or null if absent / degenerate.
-function convertBox(raw: unknown): Box | null {
+function convertBox(raw: unknown, options: { rejectBroad?: boolean } = {}): Box | null {
   if (!Array.isArray(raw) || raw.length !== 4) return null
   const [ymin, xmin, ymax, xmax] = raw.map(Number)
   if ([ymin, xmin, ymax, xmax].some((n) => !Number.isFinite(n))) return null
@@ -94,6 +140,9 @@ function convertBox(raw: unknown): Box | null {
   const w = Math.min(1 - x, Math.max(0, (xmax - xmin) / 1000))
   const h = Math.min(1 - y, Math.max(0, (ymax - ymin) / 1000))
   if (w <= 0.01 || h <= 0.01) return null
+  if (options.rejectBroad && (w * h > 0.65 || (w > 0.92 && h > 0.7))) {
+    return null
+  }
   return { x, y, w, h }
 }
 
@@ -133,11 +182,52 @@ function extractJsonObject(text: string): string {
   return t
 }
 
+function textField(value: unknown, fallback: string): string {
+  return typeof value === 'string' && value.trim() ? value.trim() : fallback
+}
+
+function stringList(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return value
+    .filter((v): v is string => typeof v === 'string')
+    .map((v) => v.trim())
+    .filter(Boolean)
+    .slice(0, 5)
+}
+
+function normalizeEnum<const T extends string>(
+  value: unknown,
+  allowed: readonly T[],
+  fallback: T,
+): T {
+  return typeof value === 'string' && allowed.includes(value.trim() as T)
+    ? (value.trim() as T)
+    : fallback
+}
+
 function normalize(raw: unknown): Normalized | null {
   if (!raw || typeof raw !== 'object') return null
   const p = raw as Record<string, unknown>
   const component = typeof p.component === 'string' ? p.component.trim() : ''
   const description = typeof p.description === 'string' ? p.description.trim() : ''
+  const safetyVerdict = normalizeEnum(
+    p.safety_verdict ?? p.safetyVerdict,
+    ['safe_to_inspect', 'caution', 'do_not_touch', 'unknown'],
+    'unknown',
+  )
+  const confidence = normalizeEnum(p.confidence, ['high', 'medium', 'low'], 'medium')
+  const safetySummary = textField(
+    p.safety_summary ?? p.safetySummary,
+    'Treat the equipment as energized until lockout/tagout and zero-energy verification are complete.',
+  )
+  const trainingGoal = textField(
+    p.training_goal ?? p.trainingGoal,
+    component
+      ? `Safely inspect and understand the visible ${component}.`
+      : 'Safely inspect and understand the visible component.',
+  )
+  const visibleEvidence = stringList(p.visible_evidence ?? p.visibleEvidence)
+  const notVisible = stringList(p.not_visible ?? p.notVisible)
   const rawSteps = Array.isArray(p.steps) ? p.steps : []
   const steps: NormalizedStep[] = rawSteps
     .filter(
@@ -145,22 +235,37 @@ function normalize(raw: unknown): Normalized | null {
         !!s &&
         typeof s === 'object' &&
         typeof (s as Record<string, unknown>).title === 'string' &&
-        typeof (s as Record<string, unknown>).instruction === 'string',
+        (typeof (s as Record<string, unknown>).action === 'string' ||
+          typeof (s as Record<string, unknown>).instruction === 'string'),
     )
     .slice(0, 7)
     .map((s) => {
       const note = s.safety_note ?? s.safetyNote
+      const action = textField(s.action ?? s.instruction, '')
+      const check = textField(s.check, '')
+      const expectedResult = textField(s.expected_result ?? s.expectedResult, '')
+      const why = textField(s.why, '')
       return {
         title: String(s.title).trim(),
-        instruction: String(s.instruction).trim(),
+        action,
+        check,
+        expectedResult,
+        why,
+        instruction: action,
         safetyNote: typeof note === 'string' ? note.trim() : '',
-        box: convertBox(s.box),
+        box: convertBox(s.box, { rejectBroad: true }),
       }
     })
   if (!component && steps.length === 0) return null
   return {
     component: component || 'Unknown',
     description,
+    safetyVerdict,
+    safetySummary,
+    confidence,
+    trainingGoal,
+    visibleEvidence,
+    notVisible,
     box: convertBox(p.box),
     steps,
   }
