@@ -7,8 +7,7 @@ interface RegionHighlightProps {
 }
 
 export function RegionHighlight({ naturalW, naturalH, box }: RegionHighlightProps) {
-  if (!naturalW || !naturalH || !box) return null
-
+  // NOTE: all hooks must run unconditionally — early returns go BELOW them.
   const [displayBox, setDisplayBox] = useState<{ x: number; y: number; w: number; h: number } | null>(null)
   const prevBoxRef = useRef<{ x: number; y: number; w: number; h: number } | null>(null)
   const animationRef = useRef<number>(0)
@@ -53,7 +52,7 @@ export function RegionHighlight({ naturalW, naturalH, box }: RegionHighlightProp
     }
   }, [box, naturalW, naturalH])
 
-  if (!displayBox) return null
+  if (!naturalW || !naturalH || !displayBox) return null
 
   const x = displayBox.x * naturalW
   const y = displayBox.y * naturalH

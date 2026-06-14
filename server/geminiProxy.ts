@@ -28,26 +28,27 @@ Look at the image and:
 
 Rules:
 - Write for someone who has never done this before and is nervous.
-- EVERY step must be a single, concrete physical action. Break everything down into the smallest possible actions. Do not combine multiple actions into one step.
+- Each step is a single, concrete physical action stated plainly. Group trivial sub-actions together; do not pad with filler steps.
 - Example of correct granularity: "Step 1: Look at the top of the contactor. Find the screw terminal labeled L1." "Step 2: Look at the wire connected to L1. Check if the wire is fully seated in the terminal." "Step 3: Look for discoloration or burn marks around the L1 terminal."
 - Example of WRONG (not granular enough): "Inspect the L1, L2, L3 terminals." Instead split into individual steps for each terminal.
 - Never say "inspect", "check", "verify", or "ensure" without saying exactly HOW and WHAT TO LOOK FOR.
 - Never tell the technician to touch, loosen, remove, or probe anything unless the step starts with confirmed lockout/tagout and zero-voltage verification.
 - If a task needs a tool, name the tool and where to put it. If you can't tell from the image, say "ask a qualified supervisor".
-- Keep every field under 20 words.
+- Keep every field under 12 words. Be terse — this is read on a phone in the field.
 - Start with safety. If you see energized conductors, exposed terminals, burn marks, or water, say "caution" or "do_not_touch".
 - "safety_verdict" must be one of: "safe_to_inspect", "caution", "do_not_touch", "unknown".
 - "confidence" must be one of: "high", "medium", "low".
 - "visible_evidence" is 2-4 short bullets naming what you can actually see.
 - "not_visible" is 2-4 short bullets naming things the image can't prove (power state, meter readings, wiring diagram).
-- Return 8-14 steps. Be extremely granular. Each step should cover ONE look, ONE check, or ONE action. Do not skip any detail.
+- Return 5 to 7 steps total — the most important ones a new tech must not miss. Each step is one clear action; do not over-fragment.
 - Each step has: "title" (what this step is about), "action" (the exact next move), "check" (what to look at), "expected_result" (what normal looks like), "why" (why it matters), "safety_note" (warning or empty string ""), "region" (where in the image to look - one of: "full" for the whole component, "top" for the top area, "bottom" for bottom area, "left" for left side, "right" for right side, "center" for the middle, "top_left" for top-left, "top_right" for top-right, "bottom_left" for bottom-left, "bottom_right" for bottom-right, "top_center" for top-center, "bottom_center" for bottom-center). Choose the region that best matches where this step's action happens in the image.
+- ALSO give a precise bounding box "box" for each step AND for the overall component, as [ymin, xmin, ymax, xmax] using integers 0-1000 (top-left origin), tightly framing exactly where to look in THIS image. Use an empty array [] if that region is not visible.
 - A good step reads like: "action": "Look at the top of the contactor. Find the terminal labeled L1.", "check": "The L1 terminal area.", "expected_result": "Wire is fully seated, no burn marks, no discoloration.", "why": "Loose L1 connections cause overheating and equipment failure.", "region": "top"
 - "description" is one sentence about what this component does.
 - If the image does NOT clearly show an HVAC or electrical component, set "component" to "Unknown" and return an empty "steps" array.
 
 Respond with ONLY a JSON object of this exact shape:
-{"component": string, "description": string, "safety_verdict": string, "safety_summary": string, "confidence": string, "training_goal": string, "visible_evidence": string[], "not_visible": string[], "steps": [{"title": string, "action": string, "check": string, "expected_result": string, "why": string, "safety_note": string, "region": string}]}`
+{"component": string, "description": string, "safety_verdict": string, "safety_summary": string, "confidence": string, "training_goal": string, "visible_evidence": string[], "not_visible": string[], "box": [ymin,xmin,ymax,xmax], "steps": [{"title": string, "action": string, "check": string, "expected_result": string, "why": string, "safety_note": string, "region": string, "box": [ymin,xmin,ymax,xmax]}]}`
 
 // Forces Gemini to emit JSON matching this shape (uppercase enum types per the
 // Gemini schema spec). Belt-and-suspenders with the text-stripping parser below.
@@ -63,6 +64,7 @@ const RESPONSE_SCHEMA = {
     training_goal: { type: 'STRING' },
     visible_evidence: { type: 'ARRAY', items: { type: 'STRING' } },
     not_visible: { type: 'ARRAY', items: { type: 'STRING' } },
+    box: { type: 'ARRAY', items: { type: 'NUMBER' } },
     steps: {
       type: 'ARRAY',
       items: {
@@ -75,6 +77,7 @@ const RESPONSE_SCHEMA = {
           why: { type: 'STRING' },
           safety_note: { type: 'STRING' },
           region: { type: 'STRING' },
+          box: { type: 'ARRAY', items: { type: 'NUMBER' } },
         },
         required: [
           'title',
@@ -84,6 +87,7 @@ const RESPONSE_SCHEMA = {
           'why',
           'safety_note',
           'region',
+          'box',
         ],
       },
     },
@@ -97,6 +101,7 @@ const RESPONSE_SCHEMA = {
     'training_goal',
     'visible_evidence',
     'not_visible',
+    'box',
     'steps',
   ],
 }
@@ -151,6 +156,20 @@ function regionToBox(region: unknown): Box {
     if (r in REGION_PRESETS) return REGION_PRESETS[r]
   }
   return REGION_PRESETS.full
+}
+
+// Gemini's precise box: [ymin, xmin, ymax, xmax] scaled 0–1000 → { x, y, w, h }
+// in 0–1, or null if absent/degenerate. Preferred over the coarse region preset.
+function convertBox(raw: unknown): Box | null {
+  if (!Array.isArray(raw) || raw.length !== 4) return null
+  const [ymin, xmin, ymax, xmax] = raw.map(Number)
+  if ([ymin, xmin, ymax, xmax].some((n) => !Number.isFinite(n))) return null
+  const x = Math.min(1, Math.max(0, xmin / 1000))
+  const y = Math.min(1, Math.max(0, ymin / 1000))
+  const w = Math.min(1 - x, Math.max(0, (xmax - xmin) / 1000))
+  const h = Math.min(1 - y, Math.max(0, (ymax - ymin) / 1000))
+  if (w <= 0.02 || h <= 0.02) return null
+  return { x, y, w, h }
 }
 
 function send(res: ServerResponse, status: number, body: unknown) {
@@ -245,7 +264,7 @@ function normalize(raw: unknown): Normalized | null {
         (typeof (s as Record<string, unknown>).action === 'string' ||
           typeof (s as Record<string, unknown>).instruction === 'string'),
     )
-    .slice(0, 16)
+    .slice(0, 7)
     .map((s) => {
       const note = s.safety_note ?? s.safetyNote
       const action = textField(s.action ?? s.instruction, '')
@@ -260,10 +279,11 @@ function normalize(raw: unknown): Normalized | null {
         why,
         instruction: action,
         safetyNote: typeof note === 'string' ? note.trim() : '',
-        box: regionToBox(s.region),
+        // Prefer Gemini's precise box; fall back to the coarse region preset.
+        box: convertBox(s.box) ?? regionToBox(s.region),
       }
     })
-  const componentBox = REGION_PRESETS.full
+  const componentBox = convertBox(p.box) ?? REGION_PRESETS.full
   if (!component && steps.length === 0) return null
   return {
     component: component || 'Unknown',
@@ -310,6 +330,7 @@ async function handleRequest(
   }
   if (!payload.image) return send(res, 400, { error: 'No image provided.' })
 
+  const startedAt = Date.now()
   let geminiRes: Response
   try {
     geminiRes = await fetch(endpoint(apiKey), {
@@ -333,6 +354,10 @@ async function handleRequest(
           responseMimeType: 'application/json',
           responseSchema: RESPONSE_SCHEMA,
           temperature: 0.4,
+          // Gemini 2.5 "thinks" before answering by default, adding many seconds.
+          // For this structured, well-specified task we don't need it — turning
+          // it off is the single biggest latency win.
+          thinkingConfig: { thinkingBudget: 0 },
         },
       }),
     })
@@ -375,6 +400,11 @@ async function handleRequest(
   const normalized = normalize(parsed)
   if (!normalized)
     return send(res, 502, { error: 'The model response was missing required fields.' })
+
+  // Latency readout for tuning (see how close we are to the <3s demo target).
+  console.log(
+    `[gemini] ${normalized.component} — ${normalized.steps.length} steps in ${Date.now() - startedAt}ms`,
+  )
 
   return send(res, 200, normalized)
 }

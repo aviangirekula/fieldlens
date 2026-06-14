@@ -1,7 +1,5 @@
 import { useRef, useState } from 'react'
 import { useCamera } from './hooks/useCamera.ts'
-import { useDetector } from './detection/useDetector.ts'
-import { Hud } from './components/Hud.tsx'
 import { StartScreen } from './components/StartScreen.tsx'
 import { TrainingWalkthrough } from './components/TrainingWalkthrough.tsx'
 import { RegionHighlight } from './components/RegionHighlight.tsx'
@@ -15,7 +13,6 @@ type GenStatus = 'idle' | 'loading' | 'ready' | 'error'
 export default function App() {
   const { videoRef, status, error, canSwitch, start, stop, switchCamera, retry } =
     useCamera()
-  const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const lastFrameRef = useRef<CapturedFrame | null>(null)
 
   // 'intro' = landing screen; 'live' = camera + capture + walkthrough flow.
@@ -37,16 +34,6 @@ export default function App() {
   // Walkthrough progress.
   const [stepIndex, setStepIndex] = useState(0)
   const [completed, setCompleted] = useState(false)
-
-  // Live detection runs only while identifying (idle); paused once we freeze a
-  // frame and start a walkthrough.
-  const detectorActive = streaming && genStatus === 'idle' && !frozenUrl
-  const { modelStatus, fps, confidence, tracking } = useDetector({
-    videoRef,
-    canvasRef,
-    active: detectorActive,
-    showBox: detectorActive,
-  })
 
   const enterLive = () => {
     setPhase('live')
@@ -177,9 +164,6 @@ export default function App() {
         />
       )}
 
-      {/* Live detection overlay — only active while identifying. */}
-      <canvas ref={canvasRef} className="detect-canvas" />
-
       {/* Per-step highlight over the frozen frame. */}
       {genStatus === 'ready' && frozenDims && (
         <RegionHighlight
@@ -201,15 +185,6 @@ export default function App() {
       {/* Tap surface: tap a component to capture + identify. */}
       {streaming && !frozenUrl && (
         <div className="tap-layer" onClick={handleTap} />
-      )}
-
-      {streaming && genStatus === 'idle' && !frozenUrl && (
-        <Hud
-          modelStatus={modelStatus}
-          fps={fps}
-          confidence={confidence}
-          tracking={tracking}
-        />
       )}
 
       {/* Home / back to start. */}
