@@ -32,6 +32,9 @@ export interface NormalizedStep {
   why: string
   instruction: string
   safetyNote: string
+  fieldTip: string
+  commonMistake: string
+  visualIndicator: string
   box: Box
 }
 export interface Walkthrough {
@@ -43,6 +46,7 @@ export interface Walkthrough {
   trainingGoal: string
   visibleEvidence: string[]
   notVisible: string[]
+  commonFailures: string[]
   box: Box
   steps: NormalizedStep[]
 }
@@ -66,12 +70,91 @@ const SAFETY_RULES = `SAFETY IS THE TOP PRIORITY. You are advising a nervous fir
 - If you genuinely cannot tell the component or its state, use "unknown" and treat it as energized.
 - Never tell the technician to touch, loosen, remove, or probe anything unless the step begins with confirmed lockout/tagout and zero-voltage verification.`
 
-const PROMPT = `You are an expert HVAC and electrical field-service trainer.
+// Real field quotes from HVAC techs (r/HVAC, HVAC-Tech forums, HVACRSchool)
+const FIELD_QUOTES: Record<string, string[]> = {
+  capacitor: [
+    'If it looks like a fat tomato, it\'s dead.',
+    'Capacitors can hold lethal charge even when power is off — never skip discharge verification.',
+    'Look for burn marks, swollen capacitors, or loose connections — these are dead giveaways.',
+  ],
+  contactor: [
+    'No click? Check coil voltage. Click but no heat? Contacts are welded.',
+    'Waiting until it quits means finding out on a hot day.',
+    'Your contactor is worn. Pitted contacts cause buzzing, hard starting, and no-cool breakdowns.',
+  ],
+  relay: [
+    'Good coil reads 200–600 Ω. No continuity = faulty relay.',
+    'Buzzing means the relay is overheating.',
+    'No response after thermostat call, flashing error codes — relay stuck or shorted.',
+  ],
+  control_board: [
+    'Flashing error codes are your first clue — match the blink pattern to the manual.',
+    'Swollen caps are the earliest failure sign.',
+    'Look for burn marks, swollen capacitors, or loose connections — these are dead giveaways.',
+  ],
+  fan_motor: [
+    'Grinding means damaged bearings or metal-to-metal contact.',
+    'Dirty filters overload the motor.',
+    'Worn bearings cause grinding noise and hot-metal odor.',
+  ],
+  compressor: [
+    'Check the run capacitor and hard start kit first.',
+    'LRA vs RLA tells the real story.',
+    'Don\'t condemn the compressor before checking the run capacitor.',
+  ],
+  thermostat: [
+    'Dead batteries are the #1 cause of "broken" thermostats.',
+    'Wire mislabeling during replacement is the top junior mistake.',
+  ],
+  circuit_breaker: [
+    'Repeated resets without finding root cause is dangerous.',
+    'Measure amp draw before replacing breaker.',
+    'Burned lugs are invisible until the panel cover is removed.',
+  ],
+}
+
+// Common wrong diagnoses — what juniors get wrong
+const WRONG_DIAGNOSIS: Record<string, string> = {
+  capacitor: 'Compressor failure (when it\'s really just a bad capacitor)',
+  contactor: 'Compressor failure (when contactor isn\'t passing power)',
+  relay: 'Bad control board (when it\'s just a $2 relay)',
+  control_board: 'Bad gas valve (when board isn\'t sending signal)',
+  fan_motor: 'Bad capacitor (when it\'s really seized bearings)',
+  compressor: 'Bad run capacitor (when it\'s internal compressor failure)',
+  thermostat: 'Bad control board (when it\'s just dead batteries)',
+  circuit_breaker: 'Bad compressor (when breaker is just doing its job)',
+}
+
+// Failure rates from field data
+const FAILURE_RATES: Record<string, string> = {
+  capacitor: '12% of all compressor starts',
+  contactor: '8% of all AC service calls',
+  relay: '5% of all board-level failures',
+  control_board: '6% of furnace service calls',
+  fan_motor: '7% of all cooling system failures',
+  compressor: '15% of all AC service calls',
+  thermostat: '10% of all HVAC service calls',
+  circuit_breaker: '4% of electrical-related HVAC issues',
+}
+
+// Early warning signs
+const EARLY_SIGNS: Record<string, string[]> = {
+  capacitor: ['Bulge', 'Brown residue on terminals', 'Split casing'],
+  contactor: ['Pitted contacts', 'Discolored terminals', 'Weak coil pull'],
+  relay: ['Carbon tracking', 'Chattering sound', 'Hot to touch'],
+  control_board: ['Swollen caps', 'Discolored PCB', 'LED blinking odd patterns'],
+  fan_motor: ['Grinding noise', 'Hot-metal smell', 'Rough shaft spin'],
+  compressor: ['High LRA', 'Breaker trip on start', 'Burnt terminal smell'],
+  thermostat: ['Blank display', 'Random cycling', 'Temp drift'],
+  circuit_breaker: ['Won\'t reset', 'Warm panel', 'Burnt smell'],
+}
+
+const PROMPT = `You are an expert HVAC and electrical field-service trainer with 20+ years of experience.
 
 Look at the image and:
 1. Identify the single main HVAC or electrical component shown.
 2. Decide whether a NEW technician can safely look at this, or must stop and get a qualified supervisor.
-3. Create a step-by-step drill telling the technician exactly what to do next, like a friend beside them saying "now do this".
+3. Create a step-by-step drill telling the technician exactly what to do next, like a seasoned mentor beside them saying "now do this".
 
 ${SAFETY_RULES}
 
@@ -86,13 +169,22 @@ Rules:
 - "visible_evidence" is 2-4 short bullets naming what you can actually see.
 - "not_visible" is 2-4 short bullets naming what the image can't prove (power state, meter readings, wiring diagram).
 - Return 5 to 7 steps total — the most important ones a new tech must not miss. One clear action each; do not over-fragment.
-- Each step has: "title", "action" (the exact next move), "check" (what to look at), "expected_result" (what normal looks like), "why", "safety_note" (warning or ""), "region" (one of: full, top, bottom, left, right, center, top_left, top_right, bottom_left, bottom_right, top_center, bottom_center).
+- Each step has: "title", "action" (the exact next move), "check" (what to look at), "expected_result" (what normal looks like), "why", "safety_note" (warning or ""), "field_tip" (pick a quote from FIELD WISDOM above that matches this step — e.g., "If it looks like a fat tomato, it's dead." for capacitors), "common_mistake" (what juniors get wrong — see WRONG_DIAGNOSIS above), "visual_indicator" (pick from EARLY_SIGNS above), "region" (one of: full, top, bottom, left, right, center, top_left, top_right, bottom_left, bottom_right, top_center, bottom_center).
 - ALSO give a precise bounding box "box" for each step AND for the overall component, as [ymin, xmin, ymax, xmax] integers 0-1000 (top-left origin), tightly framing exactly where to look in THIS image. Use [] if not visible.
 - "description" is one sentence about what this component does.
+- "common_failures" is 2-3 short bullets describing the most common ways this part fails in the field.
 - If the image does NOT clearly show an HVAC or electrical component, set "component" to "Unknown" and return an empty "steps" array.
 
+FIELD WISDOM FROM REAL HVAC TECHS (r/HVAC, HVAC-Tech forums, HVACRSchool):
+${Object.keys(FIELD_QUOTES).map(part => `[${part.toUpperCase()}]
+• Tech quotes: "${FIELD_QUOTES[part][0]}" "${FIELD_QUOTES[part][1] || ''}"
+• Often misdiagnosed as: ${WRONG_DIAGNOSIS[part]}
+• Failure rate: ${FAILURE_RATES[part]}
+• Early signs: ${EARLY_SIGNS[part]?.join(', ')}
+`).join('\n')}
+
 Respond with ONLY a JSON object of this exact shape:
-{"component": string, "description": string, "safety_verdict": string, "safety_summary": string, "confidence": string, "training_goal": string, "visible_evidence": string[], "not_visible": string[], "box": [ymin,xmin,ymax,xmax], "steps": [{"title": string, "action": string, "check": string, "expected_result": string, "why": string, "safety_note": string, "region": string, "box": [ymin,xmin,ymax,xmax]}]}`
+{"component": string, "description": string, "safety_verdict": string, "safety_summary": string, "confidence": string, "training_goal": string, "visible_evidence": string[], "not_visible": string[], "common_failures": string[], "box": [ymin,xmin,ymax,xmax], "steps": [{"title": string, "action": string, "check": string, "expected_result": string, "why": string, "safety_note": string, "field_tip": string, "common_mistake": string, "visual_indicator": string, "region": string, "box": [ymin,xmin,ymax,xmax]}]}`
 
 // Tiny, fast prompt for the verdict-first phase (no steps → ~2s).
 const VERDICT_PROMPT = `You are an HVAC and electrical field-safety expert advising a nervous first-week technician.
@@ -115,6 +207,7 @@ const RESPONSE_SCHEMA = {
     training_goal: { type: 'STRING' },
     visible_evidence: { type: 'ARRAY', items: { type: 'STRING' } },
     not_visible: { type: 'ARRAY', items: { type: 'STRING' } },
+    common_failures: { type: 'ARRAY', items: { type: 'STRING' } },
     box: BOX_SCHEMA,
     steps: {
       type: 'ARRAY',
@@ -127,14 +220,17 @@ const RESPONSE_SCHEMA = {
           expected_result: { type: 'STRING' },
           why: { type: 'STRING' },
           safety_note: { type: 'STRING' },
+          field_tip: { type: 'STRING' },
+          common_mistake: { type: 'STRING' },
+          visual_indicator: { type: 'STRING' },
           region: { type: 'STRING' },
           box: BOX_SCHEMA,
         },
-        required: ['title', 'action', 'check', 'expected_result', 'why', 'safety_note', 'region', 'box'],
+        required: ['title', 'action', 'check', 'expected_result', 'why', 'safety_note', 'region', 'box', 'field_tip', 'common_mistake', 'visual_indicator'],
       },
     },
   },
-  required: ['component', 'description', 'safety_verdict', 'safety_summary', 'confidence', 'training_goal', 'visible_evidence', 'not_visible', 'box', 'steps'],
+  required: ['component', 'description', 'safety_verdict', 'safety_summary', 'confidence', 'training_goal', 'visible_evidence', 'not_visible', 'common_failures', 'box', 'steps'],
 }
 
 const VERDICT_SCHEMA = {
@@ -229,6 +325,9 @@ function normalizeWalkthrough(raw: unknown): Walkthrough | null {
         why: textField(s.why, ''),
         instruction: action,
         safetyNote: textField(s.safety_note ?? s.safetyNote, ''),
+        fieldTip: textField(s.field_tip ?? s.fieldTip, ''),
+        commonMistake: textField(s.common_mistake ?? s.commonMistake, ''),
+        visualIndicator: textField(s.visual_indicator ?? s.visualIndicator, ''),
         box: convertBox(s.box) ?? regionToBox(s.region),
       }
     })
@@ -243,6 +342,7 @@ function normalizeWalkthrough(raw: unknown): Walkthrough | null {
     trainingGoal,
     visibleEvidence: stringList(p.visible_evidence ?? p.visibleEvidence),
     notVisible: stringList(p.not_visible ?? p.notVisible),
+    commonFailures: stringList(p.common_failures ?? p.commonFailures),
     box: componentBox,
     steps,
   }

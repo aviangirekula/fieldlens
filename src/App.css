@@ -813,6 +813,161 @@
   line-height: 1.45;
 }
 
+/* Scan Stats Badge — on completion screen */
+.wt__scan-stats {
+  margin: 20px 0 0;
+  padding: 18px;
+  border-radius: var(--fl-r-lg);
+  background: linear-gradient(135deg, rgba(34, 224, 107, 0.1) 0%, rgba(34, 224, 107, 0.03) 100%);
+  border: 1px solid rgba(34, 224, 107, 0.2);
+  text-align: left;
+  animation: step-fade-in 0.35s ease-out;
+}
+
+.wt__scan-stats-beta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: -6px -10px 14px -10px;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: var(--fl-r-md) var(--fl-r-md) 0 0;
+  font-size: 0.8rem;
+  color: #fbbf24;
+}
+
+.wt__scan-stats-beta-text {
+  color: #fde68a;
+  font-weight: 500;
+  font-size: 0.78rem;
+}
+
+.wt__scan-stats-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 10px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--fl-text);
+}
+.wt__scan-stats-row:last-child { margin-bottom: 0; }
+
+.wt__scan-stats-row--sub {
+  font-size: 0.85rem;
+  color: var(--fl-text-dim);
+  margin-top: 4px;
+}
+
+.wt__scan-stats-icon {
+  flex: none;
+  font-size: 1.1rem;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.wt__scan-stats-text strong {
+  color: var(--fl-green);
+  font-weight: 700;
+}
+
+.wt__scan-insight {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: var(--fl-r-md);
+  background: var(--fl-green-dim);
+  border: 1px solid rgba(34, 224, 107, 0.25);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.wt__scan-insight-tag {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fl-green);
+  white-space: nowrap;
+  flex: none;
+  margin-top: 2px;
+}
+
+.wt__scan-insight-text {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #c8f7da;
+}
+
+.wt__senior-quote {
+  margin-top: 16px;
+  padding: 16px 18px;
+  border-radius: var(--fl-r-md);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.06) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wt__senior-quote-tag {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #93c5fd;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wt__senior-quote-text {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #dbeafe;
+  font-style: italic;
+  border-left: 4px solid rgba(59, 130, 246, 0.6);
+  padding-left: 14px;
+  display: block;
+}
+
+.wt__field-finding {
+  margin-top: 16px;
+  padding: 16px 18px;
+  border-radius: var(--fl-r-md);
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(168, 85, 247, 0.06) 100%);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wt__field-finding-tag {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #e9d5ff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wt__field-finding-text {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #f3e8ff;
+}
+
+/* AI footer with stats */
+.wt__ai-insight {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.7rem;
+  color: #c8f7da;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    4. 📋 WALKTHROUGH PANEL — MAKE IT FEEL LIKE A MENTOR
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -1140,6 +1295,126 @@
   line-height: 1.45;
   color: #ffe0a6;
 }
+
+/* Field tip — wisdom from experienced techs */
+.wt__field-tip {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 16px;
+  padding: 12px 14px;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-left-width: 4px;
+  border-radius: var(--fl-r-md);
+  animation: safety-enter 0.35s ease-out;
+}
+
+.wt__field-tip-tag {
+  flex: none;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #93c5fd;
+  padding-top: 1px;
+  white-space: nowrap;
+}
+
+.wt__field-tip-text {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #dbeafe;
+}
+
+/* Visual indicator — what to look for */
+.wt__visual-indicator {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 16px;
+  padding: 12px 14px;
+  background: rgba(139, 92, 246, 0.08);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-left-width: 4px;
+  border-radius: var(--fl-r-md);
+}
+
+.wt__visual-indicator-tag {
+  flex: none;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #c4b5fd;
+  padding-top: 1px;
+  white-space: nowrap;
+}
+
+.wt__visual-indicator-text {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #ede9fe;
+}
+
+/* Common mistake — what juniors get wrong */
+.wt__mistake {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 16px;
+  padding: 12px 14px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-left-width: 4px;
+  border-radius: var(--fl-r-md);
+}
+
+.wt__mistake-tag {
+  flex: none;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fca5a5;
+  padding-top: 1px;
+  white-space: nowrap;
+}
+
+.wt__mistake-text {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #fecaca;
+}
+
+/* Common failures section */
+.wt__failures {
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--fl-r-md);
+}
+
+.wt__failures-title {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fca5a5;
+  margin-bottom: 10px;
+}
+
+.wt__failures ul {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--fl-text-secondary);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.wt__failures li + li { margin-top: 6px; }
 
 /* Evidence sections */
 .wt__evidence {

@@ -1,0 +1,218 @@
+[
+  {
+    "part": "capacitor",
+    " label": "Capacitor",
+    "steps": [
+      "Turn off power at disconnect/breaker and verify with multimeter",
+      "Visually inspect for bulging top, oil leakage, or burnt terminals",
+      "Discharge capacitor safely using insulated screwdriver or resistor",
+      "Test capacitance with multimeter — replace if >10% below rated MFD",
+      "Replace with same µF rating and equal/higher voltage rating, reconnecting terminals (C, FAN, HERM) exactly"
+    ],
+    "indicators": [
+      "Bulging or bubbled top vent",
+      "Oil leakage or residue on body",
+      "Burnt/melted terminal connections",
+      "System buzzing but not starting",
+      "Capacitor reads >10% below rated MFD"
+    ],
+    "regions": [
+      "Terminal connections (C, FAN, HERM)",
+      "Top vent dome for bulging",
+      "Body for oil stains/leakage"
+    ],
+    "sources": [
+      "hvacrschool.com — Capacitor testing and replacement procedure",
+      "oemstock.com — How to test your HVAC capacitor",
+      "appliancepartspros.com — How to test and replace a central AC capacitor"
+    ]
+  },
+  {
+    "part": "contactor",
+    " label": "Contactor",
+    "steps": [
+      "Shut off power at breaker/disconnect",
+      "Document wiring and disconnect all terminals",
+      "Remove old contactor from mounting bracket",
+      "Install new contactor with same coil voltage (24–29V AC)",
+      "Reconnect wiring per labels, restore power, and test system operation"
+    ],
+    "indicators": [
+      "Pitted or carbon-covered contact surfaces",
+      "Blackened/burnt contact points",
+      "Coil burnout or melted housing",
+      "Visible rust or corrosion on plunger",
+      "Plunger stuck or not pulling in fully"
+    ],
+    "regions": [
+      "Main power contact surfaces",
+      "Coil winding area",
+      "Plunger mechanism"
+    ],
+    "sources": [
+      "hvacprosales.com — HVAC contactor replacement",
+      "contactordepot.com — How to test a contactor in an AC unit",
+      "hvaclaboratory.com — Step-by-step guide to replacing your HVAC system's contactors"
+    ]
+  },
+  {
+    "part": "relay",
+    " label": "Relay",
+    "steps": [
+      "Measure relay coil voltage (24V AC expected) when board commands function",
+      "Check contact continuity with multimeter under power command",
+      "Compare resistance readings to manufacturer specs",
+      "Replace relay or entire board if contacts welded or coil open",
+      "Verify system operation after replacement"
+    ],
+    "indicators": [
+      "Burnt or pitted relay contacts",
+      "Carbon tracking on circuit board",
+      "Welded/fused contacts — no click when energized",
+      "Open coil — infinite resistance",
+      "Visible damage to solder joints"
+    ],
+    "regions": [
+      "Relay contact terminals",
+      "Coil connections",
+      "PCB solder joints near relay"
+    ],
+    "sources": [
+      "pickcomfort.com — Furnace circuit board troubleshooting and replacement",
+      "pickhvac.com — Furnace control board ultimate troubleshooting guide"
+    ]
+  },
+  {
+    "part": "control_board",
+    " label": "Control Board",
+    "steps": [
+      "Visually inspect for burnt components, swollen capacitors, corroded terminals",
+      "Check LED status codes (1 flash = ignition failure, 2 = pressure switch, 3 = limit switch)",
+      "Test 24V AC input from transformer at board terminals",
+      "Check for blown fuses and secure loose connections",
+      "Replace board if physical damage or no voltage output"
+    ],
+    "indicators": [
+      "Burnt/browned components on PCB",
+      "Swollen or leaking capacitors on board",
+      "Corroded terminal blocks",
+      "LED error codes flashing",
+      "Blown fuse on board"
+    ],
+    "regions": [
+      "LED diagnostic indicator",
+      "Transformer input terminals (24V AC)","Fuse holder",
+      "Capacitor banks",
+      "Relay/contactor terminals"
+    ],
+    "sources": [
+      "pickhvac.com — Furnace control board ultimate troubleshooting guide",
+      "pickcomfort.com — Furnace control board troubleshooting",
+      "furnaceservicemanual.com — Lennox Elite Series furnace service manual"
+    ]
+  },
+  {
+    "part": "fan_motor",
+    " label": "Fan Motor",
+    "steps": [
+      "Turn off power and remove access panel",
+      "Photograph wiring connections before disconnecting",
+      "Disconnect wires and slide out motor assembly",
+      "Inspect shaft, bearings, windings, and capacitor",
+      "Test motor winding continuity and resistance to ground"
+    ],
+    "indicators": [
+      "Burnt winding smell or visible charring",
+      "Seized or rough-spinning bearings",
+      "Grinding/squealing noise during operation",
+      "Overheating — hot to touch after running",
+      "Weak or no airflow",
+      "Bulging fan capacitor"
+    ],
+    "regions": [
+      "Motor windings — test with ohmmeter",
+      "Shaft and bearing surfaces",
+      "Capacitor connection",
+      "Mounting grommets"
+    ],
+    "sources": [
+      "pickhvac.com — Furnace control board ultimate troubleshooting guide",
+      "pickcomfort.com — Furnace control board troubleshooting"
+    ]
+  },
+  {
+    "part": "compressor",
+    " label": "Compressor",
+    "steps": [
+      "WARNING: Compressor service requires EPA Section 608 certified technician",
+      "Recovery of refrigerant required by law before any compressor service",
+      "Professional technicians test winding resistance and ground fault",
+      "Brazing and vacuum procedures required for replacement"
+    ],
+    "indicators": [
+      "Breaker trips immediately on startup — likely short circuit",
+      "Locked rotor — high amperage, no spin",
+      "Burnt terminals at connection box",
+      "Grounded windings — professional megger test required"
+    ],
+    "regions": [
+      "Terminal box connections",
+      "Motor windings — professional megger test"
+    ],
+    "sources": [
+      "EPA Section 608 certification required by law",
+      "General industry knowledge — no manufacturer-published DIY procedures"
+    ]
+  },
+  {
+    "part": "thermostat",
+    " label": "Thermostat",
+    "steps": [
+      "Check/replace batteries for battery-powered models",
+      "Verify 24–28V AC at R/W terminals for hardwired units",
+      "Inspect wiring for corrosion, loose connections at terminals",
+      "Power cycle at breaker — 20–30 seconds off, then on",
+      "Replace if display remains blank or controls unresponsive"
+    ],
+    "indicators": [
+      "Blank/dead display screen",
+      "Unresponsive buttons or touchscreen",
+      "Erratic temperature cycling",
+      "Inaccurate temperature readings",
+      "Corrosion at wiring terminals"
+    ],
+    "regions": [
+      "Battery compartment",
+      "Wire terminal connections (R, W, Y, G, C)",
+      "Sensor area — for inaccurate readings",
+      "Wall cavity — for wire damage"
+    ],
+    "sources": [
+      "trane.com — Thermostat controls troubleshooting",
+      "northnjhvac.com — Thermostat died, no AC troubleshooting",
+      "hvaclaboratory.com — How to repair a broken HVAC thermostat"
+    ]
+  },
+  {
+    "part": "circuit_breaker",
+    " label": "Circuit Breaker",
+    "steps": [
+      "WARNING: Circuit breaker work requires licensed electrician",
+      "Turn off main power before any electrical panel work",
+      "Verify breaker rating matches HVAC unit specifications",
+      "Professional electrician inspects for burnt lugs/terminals"
+    ],
+    "indicators": [
+      "Breaker trips repeatedly or won't reset",
+      "Visible burn marks at terminals",
+      "Melted housing or smell of burning plastic"
+    ],
+    "regions": [
+      "Breaker terminal connections",
+      "Bus bar connection point"
+    ],
+    "sources": [
+      "General industry knowledge — no manufacturer-published HVAC breaker procedures"
+    ]
+  }
+]

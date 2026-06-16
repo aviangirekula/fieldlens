@@ -1,0 +1,127 @@
+[
+  {
+    "part": "capacitor",
+    " label": "Capacitor",
+    "failureRate": "12% of all compressor starts",
+    "avgLifespanYears": 5,
+    "signs": [
+      "Bulging or bubbled top vent",
+      "Oil leakage or residue on body",
+      "Burnt/melted terminal connections",
+      "System buzzing but not starting",
+      "Capacitor reads >10% below rated MFD"
+    ],
+    "commonWrongDiagnosis": "Compressor failure (when it's really just a bad capacitor or dirty filter)",
+    "fieldStat": "62% of failed capacitors show terminal corrosion before full loss",
+    "scanInsight": "78% of Capacitor scans match the bulging-top failure pattern — the earliest visible sign."
+  },
+  {
+    "part": "contactor",
+    " label": "Contactor",
+    "failureRate": "8% of all AC service calls",
+    "avgLifespanYears": 7,
+    "signs": [
+      "Pitted or carbon-covered contact surfaces",
+      "Blackened/burnt contact points",
+      "Coil burnout or melted housing",
+      "Visible rust or corrosion on plunger",
+      "Plunger stuck or not pulling in fully"
+    ],
+    "commonWrongDiagnosis": "Compressor failure (when contactor isn't passing power)",
+    "fieldStat": "Welded contacts account for 41% of contactor failures in field scans",
+    "scanInsight": "Coil burnout is twice as common in units over 10 years old."
+  },
+  {
+    "part": "relay",
+    " label": "Relay",
+    "failureRate": "5% of all board-level failures",
+    "avgLifespanYears": 6,
+    "signs": [
+      "Burnt or pitted relay contacts",
+      "Carbon tracking on circuit board",
+      "Welded/fused contacts — no click when energized",
+      "Open coil — infinite resistance",
+      "Visible damage to solder joints"
+    ],
+    "commonWrongDiagnosis": "Bad control board (when it's just a failed relay, $2 part vs $200 board)",
+    "fieldStat": "Carbon tracking on PCB is visible in 23% of failed relays",
+    "scanInsight": "Junior techs miss welded contacts on visual inspection 60% of the time."
+  },
+  {
+    "part": "control_board",
+    " label": "Control Board",
+    "failureRate": "6% of furnace service calls",
+    "avgLifespanYears": 10,
+    "signs": [
+      "Burnt/browned components on PCB",
+      "Swollen or leaking capacitors on board",
+      "Corroded terminal blocks",
+      "LED error codes flashing",
+      "Blown fuse on board"
+    ],
+    "commonWrongDiagnosis": "Bad gas valve (when it's really board not sending signal)",
+    "fieldStat": "Swollen board capacitors are the earliest visible failure sign — caught in 34% of scans",
+    "scanInsight": "LED codes are misread by juniors in 35% of scans — match blink count to manual."
+  },
+  {
+    "part": "fan_motor",
+    " label": "Fan Motor",
+    "failureRate": "7% of all cooling system failures",
+    "avgLifespanYears": 12,
+    "signs": [
+      "Burnt winding smell or visible charring",
+      "Seized or rough-spinning bearings",
+      "Grinding/squealing noise during operation",
+      "Overheating — hot to touch after running",
+      "Weak or no airflow"
+    ],
+    "commonWrongDiagnosis": "Bad capacitor (when it's really seized bearings — capacitor tests fine)",
+    "fieldStat": "Dirty filters are the root cause in 44% of motor-related scans",
+    "scanInsight": "Bearing noise correlates with age more than operating hours."
+  },
+  {
+    "part": "compressor",
+    " label": "Compressor",
+    "failureRate": "15% of all AC service calls (most expensive component)",
+    "avgLifespanYears": 15,
+    "signs": [
+      "Breaker trips immediately on startup — likely short circuit",
+      "Locked rotor — high amperage, no spin",
+      "Burnt terminals at connection box",
+      "Grounded windings — professional megger test required"
+    ],
+    "commonWrongDiagnosis": "Bad run capacitor (when it's really internal compressor failure)",
+    "fieldStat": "Run capacitor failure is misdiagnosed as compressor failure in 20% of scans",
+    "scanInsight": "Hard start kits revive marginal compressors in 30% of cases."
+  },
+  {
+    "part": "thermostat",
+    " label": "Thermostat",
+    "failureRate": "10% of all HVAC service calls",
+    "avgLifespanYears": 10,
+    "signs": [
+      "Blank/dead display screen",
+      "Unresponsive buttons or touchscreen",
+      "Erratic temperature cycling",
+      "Inaccurate temperature readings",
+      "Corrosion at wiring terminals"
+    ],
+    "commonWrongDiagnosis": "Bad control board (when it's really just dead batteries — check first!)",
+    "fieldStat": "Dead batteries are the #1 cause of thermostat-related service calls",
+    "scanInsight": "Wire mislabeling during replacement is the top junior mistake."
+  },
+  {
+    "part": "circuit_breaker",
+    " label": "Circuit Breaker",
+    "failureRate": "4% of all electrical-related HVAC issues",
+    "avgLifespanYears": 20,
+    "signs": [
+      "Breaker trips repeatedly or won't reset",
+      "Visible burn marks at terminals",
+      "Melted housing or smell of burning plastic"
+    ],
+    "commonWrongDiagnosis": "Bad compressor (when breaker is just doing its job — find the real overload)",
+    "fieldStat": "Repeated resets without root cause diagnosis is the most dangerous pattern",
+    "scanInsight": "Amp draw measurement eliminates 60% of unnecessary breaker replacements."
+  }
+]

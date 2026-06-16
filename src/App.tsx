@@ -5,6 +5,7 @@ import { TrainingWalkthrough } from './components/TrainingWalkthrough.tsx'
 import { RegionHighlight } from './components/RegionHighlight.tsx'
 import { captureFrame, imageFileToFrame, type CapturedFrame } from './ai/captureFrame.ts'
 import { generateWalkthrough, fetchVerdict } from './ai/generateWalkthrough.ts'
+import { getStats, recordScan } from './services/scanStats.ts'
 import type { WalkthroughData, VerdictPreview } from './training/types.ts'
 
 const VERDICT_PREVIEW_COPY: Record<
@@ -87,6 +88,14 @@ export default function App() {
         )
         return
       }
+      // Record scan on server for real-time stats
+      void fetch('/api/scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ component: data.component }),
+      }).catch(() => {})
+      // Store in localStorage as fallback
+      recordScan(data.component)
       setWalkthrough(data)
       setGenStatus('ready')
     } catch (err) {
@@ -356,6 +365,7 @@ export default function App() {
           onBack={goBack}
           onRestart={restart}
           onClose={endSession}
+          scanStats={getStats(walkthrough.component)}
         />
       )}
 

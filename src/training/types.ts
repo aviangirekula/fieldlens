@@ -17,6 +17,12 @@ export interface TrainingStep {
   why: string
   instruction: string
   safetyNote: string
+  /** Real-world insight from experienced techs */
+  fieldTip: string
+  /** Specific mistake juniors make on this step */
+  commonMistake: string
+  /** Visible sign this step matters (e.g., "brown residue on terminals") */
+  visualIndicator: string
   box: Box | null
 }
 
@@ -29,6 +35,8 @@ export interface WalkthroughData {
   trainingGoal: string
   visibleEvidence: string[]
   notVisible: string[]
+  /** Most common ways this part fails in the field */
+  commonFailures: string[]
   box: Box | null
   steps: TrainingStep[]
 }

@@ -1,0 +1,113 @@
+[
+  {
+    "part": "capacitor",
+    " label": "Capacitor",
+    "quotes": [
+      "Capacitors can hold lethal charge even when power is off — never skip discharge verification.",
+      "Humming noises and no cooling are classic signs of a bad capacitor — always test with a multimeter before replacing.",
+      "If it looks like a fat tomato, it's dead.",
+      "Look for burn marks, swollen capacitors, or loose connections — these are dead giveaways."
+    ],
+    "mistakes": [
+      "Checking voltage but forgetting to discharge the capacitor before handling",
+      "Assuming a capacitor is good because it looks fine without testing capacitance with a multimeter",
+      "Not verifying the microfarad rating matches specifications before replacement"
+    ]
+  },
+  {
+    "part": "contactor",
+    " label": "Contactor",
+    "quotes": [
+      "A bad contactor blows apart after arcing — pitted contacts, welded terminals, or burned terminals signal trouble before complete failure.",
+      "Your contactor is worn. Pitted contacts cause buzzing, hard starting, and no-cool breakdowns.",
+      "Waiting until it quits means finding out on a hot day.",
+      "No click? Check coil voltage. Click but no heat? Contacts are welded."
+    ],
+    "mistakes": [
+      "Replacing the contactor without checking if low voltage (24V) is reaching the coil",
+      "Missing that pitted contacts can still show continuity but fail under load",
+      "Not cleaning or replacing contactors during preventative maintenance"
+    ]
+  },
+  {
+    "part": "relay",
+    " label": "Relay",
+    "quotes": [
+      "No response after thermostat call, flashing error codes, burnt capacitors — relay stuck or shorted.",
+      "Set multimeter to ohms; good coil reads 200–600 Ω. No continuity = faulty relay.",
+      "Buzzing noises signal an underlying failure — relays that chatter often overheat."
+    ],
+    "mistakes": [
+      "Testing relays while energized — shock hazard and false readings",
+      "Using wrong multimeter setting — voltage mode instead of ohms",
+      "Not disconnecting power before testing relay coils"
+    ]
+  },
+  {
+    "part": "control_board",
+    " label": "Control Board",
+    "quotes": [
+      "Look for burn marks, swollen capacitors, or loose connections — these are dead giveaways a control board is failing.",
+      "Flashing error codes are your first clue — match the blink pattern to the manual."
+    ],
+    "mistakes": [
+      "Replacing the control board without checking 24V transformer first",
+      "Not checking for loose wire connections before condemning the board",
+      "Missing that a bad relay or sensor can make the board appear faulty"
+    ]
+  },
+  {
+    "part": "fan_motor",
+    " label": "Fan Motor",
+    "quotes": [
+      "Noises often indicate insufficient lubrication or worn sleeve bearings.",
+      "Grinding suggests damaged ball bearings or metal-to-metal contact.",
+      "Excessive friction from failing bearings raises motor temperature.",
+      "Worn bearings cause grinding noise and hot-metal odor."
+    ],
+    "mistakes": [
+      "Running a motor with a burning smell instead of shutting off power immediately",
+      "Not checking the air filter — dirty filters overload the motor",
+      "Confusing bearing noise with blower wheel imbalance"
+    ]
+  },
+  {
+    "part": "compressor",
+    " label": "Compressor",
+    "quotes": [
+      "Breaker trips immediately on startup? Likely short circuit in compressor or wiring.",
+      "Compressor locked rotor — high amperage, no spin, weak capacitor or internal failure.",
+      "Don't condemn the compressor before checking the run capacitor and hard start kit."
+    ],
+    "mistakes": [
+      "Not checking the run capacitor before condemning the compressor",
+      "Missing that a hard start kit could save a marginal compressor",
+      "Not measuring locked rotor amps (LRA) vs rated load amps (RLA)"
+    ]
+  },
+  {
+    "part": "thermostat",
+    " label": "Thermostat",
+    "quotes": [
+      "Check for a short between thermostat wires — disconnect both ends and test with a DMM in ohms mode."
+    ],
+    "mistakes": [
+      "Not verifying 24V at the thermostat terminals before replacing",
+      "Mislabeling wires during replacement causing system malfunction",
+      "Assuming the thermostat is bad when the issue is in the control circuit or transformer"
+    ]
+  },
+  {
+    "part": "circuit_breaker",
+    " label": "Circuit Breaker",
+    "quotes": [
+      "Breaker trips immediately on startup? Likely short circuit in compressor or wiring.",
+      "Compressor locked rotor — high amperage, no spin."
+    ],
+    "mistakes": [
+      "Replacing the breaker without finding the root cause — compressor, contactor, wiring",
+      "Not measuring amp draw to verify if the breaker is tripping from overload vs defect",
+      "Resetting a breaker repeatedly without investigation — risk of fire or equipment damage"
+    ]
+  }
+]
