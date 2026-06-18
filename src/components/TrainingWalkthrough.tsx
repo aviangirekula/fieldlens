@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback } from 'react'
-import { timeAgo as formatTimeAgo } from '../services/scanStats.ts'
 import type { TrainingModule } from '../training/types.ts'
 
 interface TrainingWalkthroughProps {
@@ -10,17 +9,12 @@ interface TrainingWalkthroughProps {
   onBack: () => void
   onRestart: () => void
   onClose: () => void
-  /** Scan stats injected by parent */
+  /** Real local inspection count + general field guidance (no fake traction). */
   scanStats?: {
-    scanCount: number
-    accuracy: number
-    verifiedBy: number
-    statesCovered: number
-    lastUpdated: string
-    latestInsight: string
+    timesInspected: number
+    tips: string[]
+    latestTip: string
     seniorTechQuote: string
-    fieldFinding: string
-    isBeta?: boolean
   }
 }
 
@@ -117,60 +111,31 @@ export function TrainingWalkthrough({
               You've completed the {module.component} inspection drill.
             </p>
 
-            {/* Scan Stats Badge — social proof + live learning */}
+            {/* Field knowledge — general guidance, clearly NOT fabricated traction. */}
             {scanStats && (
-              <>
-                {scanStats.isBeta && (
-                  <div className="wt__scan-stats-beta">
-                    <span>🚧 Beta</span>
-                    <span className="wt__scan-stats-beta-text">Early data — scan counts grow as technicians use FieldLens</span>
+              <div className="wt__scan-stats" role="region" aria-label="Field knowledge">
+                {scanStats.seniorTechQuote && (
+                  <div className="wt__senior-quote">
+                    <span className="wt__senior-quote-tag">👨‍🔧 Rule of thumb</span>
+                    <span className="wt__senior-quote-text">{scanStats.seniorTechQuote}</span>
                   </div>
                 )}
-                <div className="wt__scan-stats" role="region" aria-label="Component scan statistics">
-                  <div className="wt__scan-stats-row">
-                    <span className="wt__scan-stats-icon" aria-hidden>✅</span>
-                    <span className="wt__scan-stats-text">
-                      This component has been scanned <strong>{scanStats.scanCount.toLocaleString()}</strong> times.
-                    </span>
+                {scanStats.latestTip && (
+                  <div className="wt__scan-insight">
+                    <span className="wt__scan-insight-tag">💡 Field tip</span>
+                    <span className="wt__scan-insight-text">{scanStats.latestTip}</span>
                   </div>
-                  <div className="wt__scan-stats-row">
-                    <span className="wt__scan-stats-icon" aria-hidden>✔️</span>
-                    <span className="wt__scan-stats-text">
-                      <strong>{scanStats.accuracy}%</strong> accuracy in identifying this part.
-                    </span>
-                  </div>
-                  <div className="wt__scan-stats-row">
-                    <span className="wt__scan-stats-icon" aria-hidden>🔧</span>
-                    <span className="wt__scan-stats-text">
-                      Verified by <strong>{scanStats.verifiedBy.toLocaleString()}</strong> technicians across <strong>{scanStats.statesCovered}</strong> states.
-                    </span>
-                  </div>
-                  <div className="wt__scan-stats-row wt__scan-stats-row--sub">
-                    <span className="wt__scan-stats-icon" aria-hidden>⏱️</span>
-                    <span className="wt__scan-stats-text">
-                      Last updated: {formatTimeAgo(scanStats.lastUpdated)}
-                    </span>
-                  </div>
-                  {scanStats.latestInsight && (
-                    <div className="wt__scan-insight">
-                      <span className="wt__scan-insight-tag">💡 Insight</span>
-                      <span className="wt__scan-insight-text">{scanStats.latestInsight}</span>
-                    </div>
-                  )}
-                  {scanStats.seniorTechQuote && (
-                    <div className="wt__senior-quote">
-                      <span className="wt__senior-quote-tag">👨‍🔧 From a Senior Tech</span>
-                      <span className="wt__senior-quote-text">{scanStats.seniorTechQuote}</span>
-                    </div>
-                  )}
-                  {scanStats.fieldFinding && (
-                    <div className="wt__field-finding">
-                      <span className="wt__field-finding-tag">📊 Field Data</span>
-                      <span className="wt__field-finding-text">{scanStats.fieldFinding}</span>
-                    </div>
-                  )}
+                )}
+                <div className="wt__scan-stats-row wt__scan-stats-row--sub">
+                  <span className="wt__scan-stats-text">
+                    General guidance from HVAC technician communities &amp; service
+                    manuals — verify against the unit's documentation.
+                    {scanStats.timesInspected > 1
+                      ? ` You've inspected this part ${scanStats.timesInspected}× on this device.`
+                      : ''}
+                  </span>
                 </div>
-              </>
+              </div>
             )}
 
             {/* Common failures — shown on completion so the tech knows what to watch for */}
@@ -336,16 +301,7 @@ export function TrainingWalkthrough({
       )}
 
       <p className="wt__ai">
-        {scanStats ? (
-          <>
-            📊 Scanned {scanStats.scanCount.toLocaleString()} times • {scanStats.accuracy}% accurate • Verified by {scanStats.verifiedBy} techs
-            {scanStats.latestInsight && (
-              <span className="wt__ai-insight">💡 {scanStats.latestInsight}</span>
-            )}
-          </>
-        ) : (
-          'AI-generated guidance — always verify with a qualified supervisor'
-        )}
+        AI-generated guidance — always verify with a qualified supervisor.
       </p>
     </section>
   )

@@ -88,13 +88,7 @@ export default function App() {
         )
         return
       }
-      // Record scan on server for real-time stats
-      void fetch('/api/scan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ component: data.component }),
-      }).catch(() => {})
-      // Store in localStorage as fallback
+      // Honest local-only inspection count (no fabricated global stats).
       recordScan(data.component)
       setWalkthrough(data)
       setGenStatus('ready')
