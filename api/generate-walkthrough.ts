@@ -1,5 +1,5 @@
-import { runWalkthrough } from '../server/geminiCore.ts'
-import { makeNodeHandler } from '../server/nodeHandler.ts'
+import { runWalkthrough } from '../server/geminiCore'
+import { makeNodeHandler } from '../server/nodeHandler'
 
 // Production serverless function (Vercel, Node.js runtime). Mirrors the dev Vite
 // middleware in server/geminiProxy.ts — both call the shared core. The
