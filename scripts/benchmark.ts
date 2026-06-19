@@ -79,6 +79,23 @@ const GAP_MS = Number(process.env.BENCH_GAP_MS || 2500) // between the 2 calls
 // Walkthrough alone returns component + safetyVerdict (all we score), so skipping
 // the separate verdict call halves API load — critical under tight free-tier quota.
 const SKIP_VERDICT = process.env.BENCH_SKIP_VERDICT === '1'
+// If BENCH_URL is set, run through the DEPLOYED endpoint (which holds the Vercel
+// GEMINI_API_KEY) instead of calling Gemini locally — so the key lives in exactly
+// one place. The endpoint returns the same normalized walkthrough shape.
+const REMOTE = process.env.BENCH_URL // e.g. https://fieldlens-eosin.vercel.app
+async function remoteWalkthrough(_k: string, image: string, mime: string): Promise<{ status: number; body: unknown }> {
+  try {
+    const res = await fetch(`${REMOTE}/api/generate-walkthrough`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image, mimeType: mime }),
+    })
+    const body = await res.json().catch(() => ({ error: 'Non-JSON response from endpoint.' }))
+    return { status: res.status, body }
+  } catch {
+    return { status: 502, body: { error: 'Could not reach the deployed endpoint.' } }
+  }
+}
 const isTransient = (body: unknown) =>
   typeof body === 'object' && body !== null && 'error' in body &&
   /rate limit|429|overload|503|temporar|unavailable|reach the gemini/i.test(
@@ -102,10 +119,11 @@ async function callWithRetry(run: Run, key: string, img: string, mime: string) {
 
 async function main() {
   const key = loadKey()
-  if (!key) {
-    console.error('No GEMINI_API_KEY (checked env and .env).')
+  if (!key && !REMOTE) {
+    console.error('No GEMINI_API_KEY (checked env and .env). Or set BENCH_URL to run remotely.')
     process.exit(1)
   }
+  if (REMOTE) console.log(`Remote mode → ${REMOTE}/api/generate-walkthrough`)
   const dir = process.argv[2] || 'benchmark'
   const testSet: Entry[] = JSON.parse(readFileSync(join(dir, 'test-set.json'), 'utf8'))
 
@@ -131,14 +149,14 @@ async function main() {
     const mime = mimeOf(t.file)
 
     let vr: { status: number; body: unknown } = { status: 0, body: {} }
-    if (!SKIP_VERDICT) {
+    if (!SKIP_VERDICT && !REMOTE) {
       const v = await callWithRetry(runVerdict, key, img, mime)
       vr = v.r
       if (vr.status === 200) verdictMs.push(v.ms)
       await sleep(GAP_MS)
     }
 
-    const f = await callWithRetry(runWalkthrough, key, img, mime)
+    const f = await callWithRetry(REMOTE ? remoteWalkthrough : runWalkthrough, key, img, mime)
     const fr = f.r
     if (fr.status === 200) fullMs.push(f.ms)
 
