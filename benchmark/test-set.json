@@ -1,4 +1,152 @@
 [
-  { "file": "contactor.jpg", "component": "contactor", "expected": "caution" },
-  { "file": "panel.jpg", "component": "circuit breaker panel", "expected": "caution" }
+  {
+    "file": "capacitor_1.jpg",
+    "component": "capacitor",
+    "expected": "unknown"
+  },
+  {
+    "file": "capacitor_2.jpg",
+    "component": "capacitor",
+    "expected": "unknown"
+  },
+  {
+    "file": "capacitor_3.jpg",
+    "component": "capacitor",
+    "expected": "caution"
+  },
+  {
+    "file": "capacitor_4.jpg",
+    "component": "capacitor",
+    "expected": "danger"
+  },
+  {
+    "file": "contactor_1.jpg",
+    "component": "contactor",
+    "expected": "danger"
+  },
+  {
+    "file": "contactor_2.jpg",
+    "component": "contactor",
+    "expected": "danger"
+  },
+  {
+    "file": "relay_1.jpg",
+    "component": "relay",
+    "expected": "unknown"
+  },
+  {
+    "file": "relay_2.jpg",
+    "component": "relay",
+    "expected": "unknown"
+  },
+  {
+    "file": "electrical_meter_1.jpg",
+    "component": "electrical meter",
+    "expected": "unknown"
+  },
+  {
+    "file": "circuit_breaker_panel_1.jpg",
+    "component": "circuit breaker panel",
+    "expected": "unknown"
+  },
+  {
+    "file": "circuit_breaker_panel_2.jpg",
+    "component": "circuit breaker panel",
+    "expected": "caution"
+  },
+  {
+    "file": "circuit_breaker_panel_3.jpg",
+    "component": "circuit breaker panel",
+    "expected": "caution"
+  },
+  {
+    "file": "circuit_breaker_panel_4.jpg",
+    "component": "circuit breaker panel",
+    "expected": "unknown"
+  },
+  {
+    "file": "thermostat_1.jpg",
+    "component": "thermostat",
+    "expected": "unknown"
+  },
+  {
+    "file": "thermostat_2.jpg",
+    "component": "thermostat",
+    "expected": "unknown"
+  },
+  {
+    "file": "thermostat_3.jpg",
+    "component": "thermostat",
+    "expected": "unknown"
+  },
+  {
+    "file": "compressor_1.jpg",
+    "component": "compressor",
+    "expected": "unknown"
+  },
+  {
+    "file": "compressor_2.jpg",
+    "component": "compressor",
+    "expected": "unknown"
+  },
+  {
+    "file": "condenser_unit_1.jpg",
+    "component": "condenser unit",
+    "expected": "unknown"
+  },
+  {
+    "file": "condenser_unit_2.jpg",
+    "component": "condenser unit",
+    "expected": "unknown"
+  },
+  {
+    "file": "air_conditioner_1.jpg",
+    "component": "air conditioner",
+    "expected": "unknown"
+  },
+  {
+    "file": "air_conditioner_2.jpg",
+    "component": "air conditioner",
+    "expected": "unknown"
+  },
+  {
+    "file": "control_board_1.jpg",
+    "component": "control board",
+    "expected": "unknown"
+  },
+  {
+    "file": "boiler_1.jpg",
+    "component": "boiler",
+    "expected": "unknown"
+  },
+  {
+    "file": "furnace_1.jpg",
+    "component": "furnace",
+    "expected": "unknown"
+  },
+  {
+    "file": "blower_motor_1.jpg",
+    "component": "blower motor",
+    "expected": "unknown"
+  },
+  {
+    "file": "blower_motor_2.jpg",
+    "component": "blower motor",
+    "expected": "unknown"
+  },
+  {
+    "file": "blower_motor_3.jpg",
+    "component": "blower motor",
+    "expected": "unknown"
+  },
+  {
+    "file": "circuit_board_1.jpg",
+    "component": "circuit board",
+    "expected": "danger"
+  },
+  {
+    "file": "burnt_wire_1.jpg",
+    "component": "burnt wire",
+    "expected": "danger"
+  }
 ]

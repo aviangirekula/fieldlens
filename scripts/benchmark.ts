@@ -70,6 +70,35 @@ function pctile(arr: number[], p: number): number {
 }
 const mean = (a: number[]) => (a.length ? Math.round(a.reduce((x, y) => x + y, 0) / a.length) : 0)
 const mimeOf = (f: string) => (extname(f).toLowerCase() === '.png' ? 'image/png' : 'image/jpeg')
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
+// Free-tier Gemini rate-limits aggressively. Throttle between calls and retry on
+// transient rate-limit / overload so the numbers reflect the MODEL, not the quota.
+const DELAY_MS = Number(process.env.BENCH_DELAY_MS || 4000) // between images
+const GAP_MS = Number(process.env.BENCH_GAP_MS || 2500) // between the 2 calls
+// Walkthrough alone returns component + safetyVerdict (all we score), so skipping
+// the separate verdict call halves API load — critical under tight free-tier quota.
+const SKIP_VERDICT = process.env.BENCH_SKIP_VERDICT === '1'
+const isTransient = (body: unknown) =>
+  typeof body === 'object' && body !== null && 'error' in body &&
+  /rate limit|429|overload|503|temporar|unavailable|reach the gemini/i.test(
+    String((body as { error?: unknown }).error ?? ''),
+  )
+
+type Run = (k: string, img: string, mime: string) => Promise<{ status: number; body: unknown }>
+// Returns the successful call's duration (excludes time lost to retries/backoff).
+async function callWithRetry(run: Run, key: string, img: string, mime: string) {
+  const backoff = [30000, 45000, 60000, 90000]
+  for (let attempt = 0; ; attempt++) {
+    const t0 = Date.now()
+    const r = await run(key, img, mime)
+    const ms = Date.now() - t0
+    if (!(r.status >= 500 && isTransient(r.body)) || attempt >= backoff.length) return { r, ms }
+    const wait = backoff[attempt]
+    process.stdout.write(`  (rate-limited, waiting ${wait / 1000}s…) `)
+    await sleep(wait)
+  }
+}
 
 async function main() {
   const key = loadKey()
@@ -83,26 +112,35 @@ async function main() {
   let idCorrect = 0
   let falseSafe = 0
   let verdictAppropriate = 0
+  let errors = 0
   const verdictMs: number[] = []
   const fullMs: number[] = []
+  const falseSafeFiles: string[] = []
 
-  console.log(`\nRunning ${testSet.length} test images…\n`)
+  console.log(`\nRunning ${testSet.length} test images (throttled ${DELAY_MS / 1000}s/img)…\n`)
   console.log(
     'image'.padEnd(26) + 'ID'.padEnd(5) + 'expect'.padEnd(9) + 'verdict'.padEnd(16) + 'safe?  full(ms)',
   )
   console.log('-'.repeat(78))
 
+  let first = true
   for (const t of testSet) {
+    if (!first) await sleep(DELAY_MS)
+    first = false
     const img = readFileSync(join(dir, 'images', t.file)).toString('base64')
     const mime = mimeOf(t.file)
 
-    const v0 = Date.now()
-    const vr = await runVerdict(key, img, mime)
-    verdictMs.push(Date.now() - v0)
+    let vr: { status: number; body: unknown } = { status: 0, body: {} }
+    if (!SKIP_VERDICT) {
+      const v = await callWithRetry(runVerdict, key, img, mime)
+      vr = v.r
+      if (vr.status === 200) verdictMs.push(v.ms)
+      await sleep(GAP_MS)
+    }
 
-    const f0 = Date.now()
-    const fr = await runWalkthrough(key, img, mime)
-    fullMs.push(Date.now() - f0)
+    const f = await callWithRetry(runWalkthrough, key, img, mime)
+    const fr = f.r
+    if (fr.status === 200) fullMs.push(f.ms)
 
     const got =
       fr.status === 200 && 'component' in fr.body
@@ -114,34 +152,41 @@ async function main() {
         ? (vr.body as { safetyVerdict: SafetyVerdict }).safetyVerdict
         : 'unknown')
     const component = got?.component ?? '(error)'
+    const isError = fr.status !== 200 && vr.status !== 200
+    if (isError) errors++
 
-    const idOk = idMatch(t.component, component)
+    const idOk = !isError && idMatch(t.component, component)
     if (idOk) idCorrect++
     const appropriate = VERDICT_SEVERITY[verdict] >= EXPECTED_SEVERITY[t.expected]
-    if (appropriate) verdictAppropriate++
+    if (!isError && appropriate) verdictAppropriate++
     const isFalseSafe = EXPECTED_SEVERITY[t.expected] >= 1 && verdict === 'safe_to_inspect'
-    if (isFalseSafe) falseSafe++
+    if (isFalseSafe) {
+      falseSafe++
+      falseSafeFiles.push(t.file)
+    }
 
     console.log(
       t.file.slice(0, 24).padEnd(26) +
-        (idOk ? 'OK ' : 'X  ').padEnd(5) +
+        (isError ? 'ERR' : idOk ? 'OK ' : 'X  ').padEnd(5) +
         t.expected.padEnd(9) +
         verdict.padEnd(16) +
         (isFalseSafe ? 'FALSE-SAFE' : 'ok').padEnd(7) +
-        String(fullMs[fullMs.length - 1]),
+        String(fr.status === 200 ? f.ms : '-'),
     )
   }
 
   const n = testSet.length
-  console.log('\n' + '═'.repeat(40))
-  console.log('RESULTS  (n = ' + n + ')')
-  console.log('═'.repeat(40))
-  console.log(`Component ID accuracy:     ${Math.round((idCorrect / n) * 100)}%  (${idCorrect}/${n})`)
-  console.log(`Verdict appropriate:       ${Math.round((verdictAppropriate / n) * 100)}%  (>= label severity)`)
-  console.log(`DANGEROUS-MARKED-SAFE:     ${falseSafe}  (target: 0)  ${falseSafe === 0 ? 'PASS' : 'FAIL'}`)
-  console.log(`Verdict latency  p50/p95:  ${pctile(verdictMs, 50)} / ${pctile(verdictMs, 95)} ms  (mean ${mean(verdictMs)})`)
-  console.log(`Full drill latency p50/p95: ${pctile(fullMs, 50)} / ${pctile(fullMs, 95)} ms  (mean ${mean(fullMs)})`)
-  console.log('═'.repeat(40))
+  const scored = n - errors
+  console.log('\n' + '═'.repeat(44))
+  console.log('RESULTS  (n = ' + n + ', scored = ' + scored + ', errors = ' + errors + ')')
+  console.log('═'.repeat(44))
+  console.log(`Component ID accuracy:      ${scored ? Math.round((idCorrect / scored) * 100) : 0}%  (${idCorrect}/${scored})`)
+  console.log(`Verdict appropriate:        ${scored ? Math.round((verdictAppropriate / scored) * 100) : 0}%  (model >= label severity)`)
+  console.log(`DANGEROUS-MARKED-SAFE:      ${falseSafe}  (target: 0)  ${falseSafe === 0 ? 'PASS' : 'FAIL'}`)
+  if (falseSafeFiles.length) console.log(`  false-safe files: ${falseSafeFiles.join(', ')}`)
+  console.log(`Verdict latency  p50/p95:   ${pctile(verdictMs, 50)} / ${pctile(verdictMs, 95)} ms  (mean ${mean(verdictMs)}, n=${verdictMs.length})`)
+  console.log(`Full drill latency p50/p95: ${pctile(fullMs, 50)} / ${pctile(fullMs, 95)} ms  (mean ${mean(fullMs)}, n=${fullMs.length})`)
+  console.log('═'.repeat(44))
   console.log('Bar: ID >=90%, false-safe = 0, verdict latency <3s.\n')
 }
 
