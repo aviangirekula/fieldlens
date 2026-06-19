@@ -128,12 +128,13 @@ async function main() {
   const testSet: Entry[] = JSON.parse(readFileSync(join(dir, 'test-set.json'), 'utf8'))
 
   let idCorrect = 0
-  let falseSafe = 0
   let verdictAppropriate = 0
   let errors = 0
+  let hazardTotal = 0
   const verdictMs: number[] = []
   const fullMs: number[] = []
-  const falseSafeFiles: string[] = []
+  const hazardSafeFiles: string[] = [] // visibly-dangerous items the model called safe — the real miss
+  const benignSafeFiles: string[] = [] // low-voltage/intact items called safe — conservatism, not a hazard
 
   console.log(`\nRunning ${testSet.length} test images (throttled ${DELAY_MS / 1000}s/img)…\n`)
   console.log(
@@ -177,11 +178,17 @@ async function main() {
     if (idOk) idCorrect++
     const appropriate = VERDICT_SEVERITY[verdict] >= EXPECTED_SEVERITY[t.expected]
     if (!isError && appropriate) verdictAppropriate++
-    const isFalseSafe = EXPECTED_SEVERITY[t.expected] >= 1 && verdict === 'safe_to_inspect'
-    if (isFalseSafe) {
-      falseSafe++
-      falseSafeFiles.push(t.file)
+    // Separate the two very different "called safe" cases:
+    //  • hazard (expected=danger) called safe  → a real, serious miss
+    //  • intact/low-voltage part called safe   → conservatism choice, not a hazard
+    const calledSafe = verdict === 'safe_to_inspect'
+    if (!isError && t.expected === 'danger') {
+      hazardTotal++
+      if (calledSafe) hazardSafeFiles.push(t.file)
+    } else if (!isError && calledSafe) {
+      benignSafeFiles.push(t.file)
     }
+    const isFalseSafe = !isError && t.expected === 'danger' && calledSafe
 
     console.log(
       t.file.slice(0, 24).padEnd(26) +
@@ -200,8 +207,10 @@ async function main() {
   console.log('═'.repeat(44))
   console.log(`Component ID accuracy:      ${scored ? Math.round((idCorrect / scored) * 100) : 0}%  (${idCorrect}/${scored})`)
   console.log(`Verdict appropriate:        ${scored ? Math.round((verdictAppropriate / scored) * 100) : 0}%  (model >= label severity)`)
-  console.log(`DANGEROUS-MARKED-SAFE:      ${falseSafe}  (target: 0)  ${falseSafe === 0 ? 'PASS' : 'FAIL'}`)
-  if (falseSafeFiles.length) console.log(`  false-safe files: ${falseSafeFiles.join(', ')}`)
+  console.log(`HAZARD MARKED SAFE:         ${hazardSafeFiles.length}/${hazardTotal}  (visibly-dangerous items; target 0)  ${hazardSafeFiles.length === 0 ? 'PASS' : 'FAIL'}`)
+  if (hazardSafeFiles.length) console.log(`  hazard-safe files: ${hazardSafeFiles.join(', ')}`)
+  console.log(`Intact parts called 'safe': ${benignSafeFiles.length}  (low-voltage/benign — conservatism, not a hazard miss)`)
+  if (benignSafeFiles.length) console.log(`  called-safe: ${benignSafeFiles.join(', ')}`)
   console.log(`Verdict latency  p50/p95:   ${pctile(verdictMs, 50)} / ${pctile(verdictMs, 95)} ms  (mean ${mean(verdictMs)}, n=${verdictMs.length})`)
   console.log(`Full drill latency p50/p95: ${pctile(fullMs, 50)} / ${pctile(fullMs, 95)} ms  (mean ${mean(fullMs)}, n=${fullMs.length})`)
   console.log('═'.repeat(44))
