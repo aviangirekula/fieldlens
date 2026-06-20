@@ -281,23 +281,23 @@
     </div>
     <div class="grid g3">
       <div class="card">
-        <div class="num">30</div>
-        <h3>hand-verified test images</h3>
-        <p class="mut">A labeled benchmark set we built and visually checked one by one — no junk, no mislabels.</p>
+        <div class="num" style="background:linear-gradient(90deg,#22c55e,#86efac);-webkit-background-clip:text;background-clip:text;color:transparent">0&nbsp;/&nbsp;8</div>
+        <h3>hazards called "safe"</h3>
+        <p class="mut">Across 8 visibly-dangerous or live-exposed parts (blown caps, burnt contactors, open panels), FieldLens marked <b>zero</b> as safe to inspect.</p>
       </div>
       <div class="card">
-        <div class="num">15</div>
-        <h3>component types</h3>
-        <p class="mut">Capacitors, contactors, relays, breaker panels, motors, control boards, condensers, and more.</p>
+        <div class="num">70%</div>
+        <h3>component-ID accuracy</h3>
+        <p class="mut">21 of 30 images, strict exact-match across 15 component types. Close synonyms count as misses, so real recognition runs higher.</p>
       </div>
       <div class="card">
-        <div class="num" style="background:linear-gradient(90deg,#22c55e,#86efac);-webkit-background-clip:text;background-clip:text;color:transparent">8</div>
-        <h3>safety-critical cases</h3>
-        <p class="mut">Visibly dangerous or live-exposed parts — to test the metric that matters most: never call a hazard "safe."</p>
+        <div class="num">~6s</div>
+        <h3>photo → full drill</h3>
+        <p class="mut">Median end to end. A fast safety verdict shows first, in about a second, while the full walkthrough loads.</p>
       </div>
     </div>
     <p class="mut" style="font-size:12.5px;margin-top:16px">
-      Quantitative results (component-ID accuracy, dangerous-marked-safe rate, latency) are being finalized and will be published here. Honest caveat: the set is web-sourced images (catalog + some field photos), cleaner than what a phone captures in a dark mechanical room — an upper bound, not field performance. We're recruiting design-partner techs to benchmark on real field photos.
+      Measured on our 30-image set through the live app (30/30, no errors). Honest caveats: these are web-sourced images (catalog + field photos), cleaner than a phone in a dark mechanical room — an upper bound, not field performance; and ID is scored on strict exact match. The model reserves "do not touch" for genuinely hazardous gear and will call low-voltage parts safe — we're tightening that for live panels and boards. Next: benchmarking on real field photos with design-partner techs.
     </p>
     <div class="card" style="margin-top:18px">
       <h3>Status: open beta</h3>
