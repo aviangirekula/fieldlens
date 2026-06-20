@@ -286,9 +286,9 @@
         <p class="mut">Across 8 visibly-dangerous or live-exposed parts (blown caps, burnt contactors, open panels), FieldLens marked <b>zero</b> as safe to inspect.</p>
       </div>
       <div class="card">
-        <div class="num">70%</div>
+        <div class="num">70–80%</div>
         <h3>component-ID accuracy</h3>
-        <p class="mut">21 of 30 images, strict exact-match across 15 component types. Close synonyms count as misses, so real recognition runs higher.</p>
+        <p class="mut">21–24 of 30 across repeated runs (the model is non-deterministic), strict exact-match over 15 types. Close synonyms count as misses, so real recognition runs higher.</p>
       </div>
       <div class="card">
         <div class="num">~6s</div>
@@ -297,7 +297,7 @@
       </div>
     </div>
     <p class="mut" style="font-size:12.5px;margin-top:16px">
-      Measured on our 30-image set through the live app (30/30, no errors). Honest caveats: these are web-sourced images (catalog + field photos), cleaner than a phone in a dark mechanical room — an upper bound, not field performance; and ID is scored on strict exact match. The model reserves "do not touch" for genuinely hazardous gear and will call low-voltage parts safe — we're tightening that for live panels and boards. Next: benchmarking on real field photos with design-partner techs.
+      Measured on our 30-image set through the live app, repeated across runs (30/30, no errors each time). The 0-of-8 hazard result held in every run. Honest caveats: these are web-sourced images (catalog + field photos), cleaner than a phone in a dark mechanical room — an upper bound, not field performance; and ID is scored on strict exact match. The model reserves "do not touch" for genuinely hazardous gear and will call low-voltage parts safe — we're tightening that for live panels and boards. Next: benchmarking on real field photos with design-partner techs.
     </p>
     <div class="card" style="margin-top:18px">
       <h3>Status: open beta</h3>

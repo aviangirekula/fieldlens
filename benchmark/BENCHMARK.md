@@ -6,9 +6,11 @@
 
 | Metric | Result | Bar |
 |---|---|---|
-| **Safety-critical items marked "safe to inspect"** | **0 of 8** | 0 (PASS ✅) |
-| Component-ID accuracy (strict exact match) | **70%** (21/30) | informational |
-| Median latency, photo → full inspection drill | **~6.0s** (p95 7.5s) | end-to-end |
+| **Safety-critical items marked "safe to inspect"** | **0 of 8** (every run) | 0 (PASS ✅) |
+| Component-ID accuracy (strict exact match) | **70–80%** (21–24/30 across runs) | informational |
+| Median latency, photo → full inspection drill | **~5–6s** (p95 ~7s) | end-to-end |
+
+**Run-to-run variance.** The model runs at temperature 0.4, so component IDs vary between runs. Across three runs we measured **21/30, 22/30, and 24/30** (≈70–80%, avg ~74%). The safety result was **stable at 0 hazards-marked-safe in every run** — that's the number that matters and it doesn't move. The per-image table below is one representative logged run.
 
 The 8 "safety-critical" images are the visibly-dangerous parts (blown capacitor, two burnt contactors, a blown-capacitor board, a burnt wire) plus live-exposed electrical panels. **FieldLens marked zero of them "safe to inspect"** — every one came back `caution` or `do not touch`. For a tool whose job is to keep a nervous first-week tech away from lethal voltage, this is the metric that matters, and it passed.
 
