@@ -1584,6 +1584,23 @@
   }
 }
 
+/* Portrait / narrow (mobile): split the screen — captured frame + highlight box
+   on top, walkthrough steps on the bottom — so both are visible at the same time.
+   (Mirrors the landscape side-dock, but stacked vertically.) */
+@media (orientation: portrait), (max-width: 759px) {
+  .stage--sidebar .wt {
+    height: 52vh;
+    max-height: 52vh;
+  }
+  .stage--sidebar .feed,
+  .stage--sidebar .frozen,
+  .stage--sidebar .detect-canvas,
+  .stage--sidebar .region,
+  .stage--sidebar .tap-layer {
+    bottom: 52vh;
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    5. 📸 CAMERA VIEW POLISH
    ═══════════════════════════════════════════════════════════════════════════ */
