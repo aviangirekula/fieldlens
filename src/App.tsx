@@ -49,15 +49,16 @@ export default function App() {
   const [stepIndex, setStepIndex] = useState(0)
   const [completed, setCompleted] = useState(false)
 
-  // Portrait (mobile) lays the captured frame + steps out as two columns and
-  // shows the WHOLE frame (object-fit: contain); the highlight must match that
-  // fit so the box stays aligned.
-  const [isPortrait, setIsPortrait] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(orientation: portrait)').matches,
+  // Held sideways (landscape) docks the steps to the right and shows the WHOLE
+  // captured frame (object-fit: contain) shrunk on the left; the highlight must
+  // match that fit so the box stays aligned. Portrait keeps the original
+  // full-frame (cover) layout.
+  const [isLandscape, setIsLandscape] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(orientation: landscape)').matches,
   )
   useEffect(() => {
-    const mq = window.matchMedia('(orientation: portrait)')
-    const onChange = (e: MediaQueryListEvent) => setIsPortrait(e.matches)
+    const mq = window.matchMedia('(orientation: landscape)')
+    const onChange = (e: MediaQueryListEvent) => setIsLandscape(e.matches)
     mq.addEventListener('change', onChange)
     return () => mq.removeEventListener('change', onChange)
   }, [])
@@ -213,7 +214,7 @@ export default function App() {
           naturalW={frozenDims.w}
           naturalH={frozenDims.h}
           box={activeBox}
-          fit={isPortrait ? 'contain' : 'cover'}
+          fit={isLandscape ? 'contain' : 'cover'}
         />
       )}
 
