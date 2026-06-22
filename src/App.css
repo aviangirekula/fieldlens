@@ -1553,7 +1553,7 @@
     left: auto;
     top: 0;
     bottom: 0;
-    width: 400px;
+    width: 320px;
     max-height: none;
     justify-content: stretch;
     border-radius: var(--fl-r-lg) 0 0 var(--fl-r-lg);
@@ -1568,17 +1568,17 @@
   .stage--sidebar .detect-canvas,
   .stage--sidebar .region,
   .stage--sidebar .tap-layer {
-    right: 400px;
+    right: 320px;
   }
 
-  /* whole captured frame, shrunk to fit the left area (not cropped) */
+  /* whole captured frame, left-aligned and as large as fits (not cropped) */
   .stage--sidebar .frozen {
     object-fit: contain;
-    object-position: center;
+    object-position: left center;
   }
 
   .stage--sidebar .gen {
-    right: 400px;
+    right: 320px;
   }
 
   .stage--sidebar .home {
@@ -1587,7 +1587,7 @@
   }
 
   .stage--sidebar .hint {
-    max-width: calc(100% - 400px - 48px);
+    max-width: calc(100% - 320px - 48px);
   }
 }
 

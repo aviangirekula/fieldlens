@@ -69,7 +69,7 @@ export function RegionHighlight({ naturalW, naturalH, box, fit = 'cover' }: Regi
     <svg
       className="region"
       viewBox={`0 0 ${naturalW} ${naturalH}`}
-      preserveAspectRatio={fit === 'contain' ? 'xMidYMid meet' : 'xMidYMid slice'}
+      preserveAspectRatio={fit === 'contain' ? 'xMinYMid meet' : 'xMidYMid slice'}
       aria-hidden
       role="img"
       aria-label="Spotlight highlighting the current inspection area"
