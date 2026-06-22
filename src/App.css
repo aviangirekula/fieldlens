@@ -1584,20 +1584,43 @@
   }
 }
 
-/* Portrait / narrow (mobile): split the screen — captured frame + highlight box
-   on top, walkthrough steps on the bottom — so both are visible at the same time.
-   (Mirrors the landscape side-dock, but stacked vertically.) */
-@media (orientation: portrait), (max-width: 759px) {
+/* Portrait (mobile): two columns — the WHOLE captured frame (uncropped, shown
+   smaller) with its highlight box on the left, a scrollable steps column on the
+   right, so the full image and the steps are visible at the same time. */
+@media (orientation: portrait) {
   .stage--sidebar .wt {
-    height: 52vh;
-    max-height: 52vh;
+    left: auto;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 50%;
+    max-width: 50%;
+    height: 100%;
+    max-height: none;
+    border-radius: var(--fl-r-lg) 0 0 var(--fl-r-lg);
+    border-top: none;
+    border-left: 1px solid var(--fl-glass-border);
   }
+  .stage--sidebar .wt__bar { border-radius: 0; }
+
   .stage--sidebar .feed,
   .stage--sidebar .frozen,
   .stage--sidebar .detect-canvas,
   .stage--sidebar .region,
   .stage--sidebar .tap-layer {
-    bottom: 52vh;
+    right: 50%;
+    bottom: 0;
+  }
+
+  /* show the entire captured frame, not a cropped fill */
+  .stage--sidebar .frozen {
+    object-fit: contain;
+    object-position: center;
+  }
+
+  .stage--sidebar .home {
+    left: calc(12px + var(--safe-left));
+    right: auto;
   }
 }
 

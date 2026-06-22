@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useCamera } from './hooks/useCamera.ts'
 import { StartScreen } from './components/StartScreen.tsx'
 import { TrainingWalkthrough } from './components/TrainingWalkthrough.tsx'
@@ -48,6 +48,19 @@ export default function App() {
   // Walkthrough progress.
   const [stepIndex, setStepIndex] = useState(0)
   const [completed, setCompleted] = useState(false)
+
+  // Portrait (mobile) lays the captured frame + steps out as two columns and
+  // shows the WHOLE frame (object-fit: contain); the highlight must match that
+  // fit so the box stays aligned.
+  const [isPortrait, setIsPortrait] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(orientation: portrait)').matches,
+  )
+  useEffect(() => {
+    const mq = window.matchMedia('(orientation: portrait)')
+    const onChange = (e: MediaQueryListEvent) => setIsPortrait(e.matches)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
 
   const enterLive = () => {
     setPhase('live')
@@ -200,6 +213,7 @@ export default function App() {
           naturalW={frozenDims.w}
           naturalH={frozenDims.h}
           box={activeBox}
+          fit={isPortrait ? 'contain' : 'cover'}
         />
       )}
 

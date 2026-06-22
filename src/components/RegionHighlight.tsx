@@ -4,9 +4,12 @@ interface RegionHighlightProps {
   naturalW: number
   naturalH: number
   box: { x: number; y: number; w: number; h: number } | null
+  /** 'cover' = fill+crop (default); 'contain' = whole image letterboxed. Must
+   *  match the frozen image's object-fit so the box stays aligned. */
+  fit?: 'cover' | 'contain'
 }
 
-export function RegionHighlight({ naturalW, naturalH, box }: RegionHighlightProps) {
+export function RegionHighlight({ naturalW, naturalH, box, fit = 'cover' }: RegionHighlightProps) {
   // NOTE: all hooks must run unconditionally — early returns go BELOW them.
   const [displayBox, setDisplayBox] = useState<{ x: number; y: number; w: number; h: number } | null>(null)
   const prevBoxRef = useRef<{ x: number; y: number; w: number; h: number } | null>(null)
@@ -66,7 +69,7 @@ export function RegionHighlight({ naturalW, naturalH, box }: RegionHighlightProp
     <svg
       className="region"
       viewBox={`0 0 ${naturalW} ${naturalH}`}
-      preserveAspectRatio="xMidYMid slice"
+      preserveAspectRatio={fit === 'contain' ? 'xMidYMid meet' : 'xMidYMid slice'}
       aria-hidden
       role="img"
       aria-label="Spotlight highlighting the current inspection area"
