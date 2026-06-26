@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
+type Tone = 'safe_to_inspect' | 'caution' | 'do_not_touch' | 'unknown'
+
 interface RegionHighlightProps {
   naturalW: number
   naturalH: number
@@ -7,9 +9,21 @@ interface RegionHighlightProps {
   /** 'cover' = fill+crop (default); 'contain' = whole image letterboxed. Must
    *  match the frozen image's object-fit so the box stays aligned. */
   fit?: 'cover' | 'contain'
+  /** Safety verdict of the component — the box is drawn in the matching STATUS
+   *  color so the hazard reads directly on the equipment. */
+  tone?: Tone
 }
 
-export function RegionHighlight({ naturalW, naturalH, box, fit = 'cover' }: RegionHighlightProps) {
+// Status colors (match the design tokens). The accent blue is deliberately NOT
+// used here — the box always means a safety state, never a neutral UI element.
+const TONE_COLOR: Record<Tone, string> = {
+  do_not_touch: '#e5484d', // red
+  caution: '#e89a26', // amber
+  unknown: '#e89a26', // treat unknown as caution
+  safe_to_inspect: '#2fb866', // green
+}
+
+export function RegionHighlight({ naturalW, naturalH, box, fit = 'cover', tone = 'unknown' }: RegionHighlightProps) {
   // NOTE: all hooks must run unconditionally — early returns go BELOW them.
   const [displayBox, setDisplayBox] = useState<{ x: number; y: number; w: number; h: number } | null>(null)
   const prevBoxRef = useRef<{ x: number; y: number; w: number; h: number } | null>(null)
@@ -57,90 +71,53 @@ export function RegionHighlight({ naturalW, naturalH, box, fit = 'cover' }: Regi
 
   if (!naturalW || !naturalH || !displayBox) return null
 
+  const color = TONE_COLOR[tone]
   const x = displayBox.x * naturalW
   const y = displayBox.y * naturalH
   const w = displayBox.w * naturalW
   const h = displayBox.h * naturalH
   const maskId = 'region-cutout'
-  const cx = x + w / 2
-  const cy = y + h / 2
 
   return (
     <svg
       className="region"
       viewBox={`0 0 ${naturalW} ${naturalH}`}
-      preserveAspectRatio={fit === 'contain' ? 'xMinYMid meet' : 'xMidYMid slice'}
+      preserveAspectRatio={fit === 'contain' ? 'xMidYMid meet' : 'xMidYMid slice'}
       aria-hidden
       role="img"
-      aria-label="Spotlight highlighting the current inspection area"
+      aria-label="Highlight on the current inspection area"
     >
       <defs>
-        <filter id="spotlight-glow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-
         <mask id={maskId}>
           <rect x="0" y="0" width={naturalW} height={naturalH} fill="white" />
-          <rect x={x} y={y} width={w} height={h} rx={10} fill="black" />
+          <rect x={x} y={y} width={w} height={h} rx={8} fill="black" />
         </mask>
-
-        <radialGradient id="spotlight-cone" cx={cx / naturalW} cy={cy / naturalH} r="0.25">
-          <stop offset="0%" stopColor="rgba(34,224,107,0.15)" />
-          <stop offset="50%" stopColor="rgba(34,224,107,0.06)" />
-          <stop offset="100%" stopColor="rgba(34,224,107,0)" />
-        </radialGradient>
       </defs>
 
+      {/* Scrim: dim the rest of the photo so the highlighted part stands out
+          and any card text over the photo stays legible. */}
       <rect
         x="0"
         y="0"
         width={naturalW}
         height={naturalH}
-        fill="rgba(0,0,0,0.68)"
+        fill="rgba(8,9,12,0.58)"
         mask={`url(#${maskId})`}
       />
 
-      <ellipse cx={cx} cy={cy} rx={w * 0.95} ry={h * 0.95} fill="url(#spotlight-cone)" />
-
+      {/* The box itself, in the safety-status color. Solid, calm — no neon glow
+          or marching ants. */}
       <rect
         className="region__border"
         x={x}
         y={y}
         width={w}
         height={h}
-        rx={10}
+        rx={8}
         fill="none"
-        stroke="#22e06b"
+        stroke={color}
         strokeWidth={3}
         vectorEffect="non-scaling-stroke"
-        filter="url(#spotlight-glow)"
-      />
-
-      <circle
-        className="region__pulse"
-        cx={cx}
-        cy={cy}
-        r={0}
-        fill="none"
-        stroke="rgba(34,224,107,0.4)"
-        strokeWidth={2.5}
-        vectorEffect="non-scaling-stroke"
-      />
-
-      <circle
-        className="region__pulse region__pulse--secondary"
-        cx={cx}
-        cy={cy}
-        r={0}
-        fill="none"
-        stroke="rgba(34,224,107,0.25)"
-        strokeWidth={2}
-        vectorEffect="non-scaling-stroke"
-        style={{ animationDelay: '0.8s' }}
       />
     </svg>
   )

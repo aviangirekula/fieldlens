@@ -1,40 +1,55 @@
 :root {
   color-scheme: dark;
 
-  /* ── FieldLens Design Tokens ─────────────────────────────────────────────── */
-  --fl-green: #22e06b;
-  --fl-green-dim: rgba(34, 224, 107, 0.14);
-  --fl-green-glow: rgba(34, 224, 107, 0.35);
-  --fl-amber: #ffb020;
-  --fl-amber-dim: rgba(255, 176, 32, 0.12);
-  --fl-amber-glow: rgba(255, 176, 32, 0.35);
-  --fl-red: #ff4b55;
-  --fl-red-dim: rgba(255, 75, 85, 0.16);
-  --fl-red-glow: rgba(255, 75, 85, 0.42);
-  --fl-blue: #2f6bff;
+  /* ── FieldLens design tokens — refined dark ──────────────────────────────── */
+  /* ONE calm accent for all interactive / primary elements. */
+  --fl-accent: #3f7ad1;
+  --fl-accent-strong: #5a90e0;
+  --fl-accent-dim: rgba(63, 122, 209, 0.14);
+  --fl-accent-border: rgba(63, 122, 209, 0.42);
+  --fl-blue: var(--fl-accent); /* back-compat: old --fl-blue maps to the accent */
 
-  /* Surfaces */
-  --fl-bg: #0a0b0e;
-  --fl-bg-mesh: linear-gradient(160deg, #0e1014 0%, #0a0b0e 40%, #0d1117 100%);
-  --fl-surface: #14161a;
-  --fl-surface-glass: rgba(17, 19, 23, 0.94);
-  --fl-glass: rgba(10, 12, 15, 0.55);
-  --fl-glass-border: rgba(255, 255, 255, 0.12);
+  /* SAFETY STATUS COLORS — used ONLY to indicate state, never decoration. */
+  --fl-green: #2fb866;          /* Safe */
+  --fl-green-dim: rgba(47, 184, 102, 0.14);
+  --fl-green-glow: rgba(47, 184, 102, 0.4);
+  --fl-amber: #e89a26;          /* Caution */
+  --fl-amber-dim: rgba(232, 154, 38, 0.14);
+  --fl-amber-glow: rgba(232, 154, 38, 0.42);
+  --fl-red: #e5484d;            /* Danger / Do Not Touch */
+  --fl-red-dim: rgba(229, 72, 77, 0.16);
+  --fl-red-glow: rgba(229, 72, 77, 0.46);
 
-  /* Text */
-  --fl-text: #fff;
-  --fl-text-secondary: #c4c9d2;
-  --fl-text-dim: #8b93a1;
-  --fl-text-muted: #7e8794;
+  /* Surfaces — solid and flat (no mesh, no gradients). */
+  --fl-bg: #0e1014;
+  --fl-bg-mesh: #0e1014;        /* back-compat: was a gradient, now solid */
+  --fl-surface: #171a20;        /* solid cards */
+  --fl-surface-2: #1d212a;      /* nested surfaces */
+  --fl-surface-glass: #15181d;  /* solid panel placed over the photo */
+  --fl-glass: rgba(20, 23, 28, 0.82);
+  --fl-glass-border: rgba(255, 255, 255, 0.10);
+  --fl-line: rgba(255, 255, 255, 0.08);
+  --fl-scrim: rgba(8, 9, 12, 0.66); /* dim the photo behind a card */
+
+  /* Text — high contrast. */
+  --fl-text: #f3f5f8;
+  --fl-text-secondary: #c2c8d2;
+  --fl-text-dim: #9098a5;
+  --fl-text-muted: #777f8c;
 
   /* Radius */
   --fl-r-sm: 8px;
-  --fl-r-md: 14px;
-  --fl-r-lg: 20px;
+  --fl-r-md: 12px;
+  --fl-r-lg: 18px;
   --fl-r-pill: 999px;
 
-  /* Font */
-  --fl-font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
+  /* Shadows — subtle, no colored glow. */
+  --fl-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --fl-shadow-pop: 0 10px 34px rgba(0, 0, 0, 0.5);
+
+  /* Font — plain system stack. */
+  --fl-font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --fl-font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', monospace;
 
   /* Safe area */
   --safe-top: env(safe-area-inset-top, 0px);
@@ -51,7 +66,7 @@ html, body, #root {
   height: 100%;
   width: 100%;
   background: var(--fl-bg);
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--fl-font);
   color: var(--fl-text);
   -webkit-font-smoothing: antialiased;
   overscroll-behavior: none;
@@ -65,7 +80,8 @@ body {
 
 /* Shared micro-interaction base */
 button {
+  font-family: inherit;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 0.08s ease, opacity 0.15s ease, background 0.2s ease;
+  transition: transform 0.08s ease, opacity 0.15s ease, background 0.2s ease, border-color 0.2s ease;
 }
-button:active { transform: scale(0.96); }
+button:active { transform: scale(0.97); }

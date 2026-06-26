@@ -169,13 +169,18 @@ export function TrainingWalkthrough({
                 <span className="wt__verdict-icon" aria-hidden>{verdict.icon}</span>
                 <div>
                   <strong className="wt__verdict-label">{verdict.label}</strong>
-                  <p className="wt__verdict-detail">{verdict.detail}</p>
+                  {module.safetySummary && (
+                    <p className="wt__verdict-reason">{module.safetySummary}</p>
+                  )}
                 </div>
               </div>
             )}
 
-            {index === 0 && module.safetySummary && (
-              <p className="wt__safety-summary">{module.safetySummary}</p>
+            {index === 0 && verdict.detail && (
+              <details className="wt__why-verdict">
+                <summary>Why this verdict?</summary>
+                <p>{verdict.detail}</p>
+              </details>
             )}
 
             <div className="wt__head">

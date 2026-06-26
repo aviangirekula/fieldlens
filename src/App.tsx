@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useCamera } from './hooks/useCamera.ts'
 import { StartScreen } from './components/StartScreen.tsx'
 import { TrainingWalkthrough } from './components/TrainingWalkthrough.tsx'
@@ -48,20 +48,6 @@ export default function App() {
   // Walkthrough progress.
   const [stepIndex, setStepIndex] = useState(0)
   const [completed, setCompleted] = useState(false)
-
-  // Held sideways (landscape) docks the steps to the right and shows the WHOLE
-  // captured frame (object-fit: contain) shrunk on the left; the highlight must
-  // match that fit so the box stays aligned. Portrait keeps the original
-  // full-frame (cover) layout.
-  const [isLandscape, setIsLandscape] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(orientation: landscape)').matches,
-  )
-  useEffect(() => {
-    const mq = window.matchMedia('(orientation: landscape)')
-    const onChange = (e: MediaQueryListEvent) => setIsLandscape(e.matches)
-    mq.addEventListener('change', onChange)
-    return () => mq.removeEventListener('change', onChange)
-  }, [])
 
   const enterLive = () => {
     setPhase('live')
@@ -214,7 +200,8 @@ export default function App() {
           naturalW={frozenDims.w}
           naturalH={frozenDims.h}
           box={activeBox}
-          fit={isLandscape ? 'contain' : 'cover'}
+          fit="contain"
+          tone={walkthrough?.safetyVerdict ?? 'unknown'}
         />
       )}
 

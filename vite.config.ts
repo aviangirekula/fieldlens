@@ -10,7 +10,9 @@ import { geminiProxy } from './server/geminiProxy.ts'
 // geminiProxy adds a server-side /api/generate-walkthrough endpoint that holds
 // the GEMINI_API_KEY (never shipped to the browser).
 export default defineConfig({
-  plugins: [react(), basicSsl(), geminiProxy()],
+  // FL_NO_SSL=1 serves plain HTTP on localhost (for headless screenshot tooling).
+  // Default keeps the self-signed cert so the camera works over the LAN.
+  plugins: [react(), ...(process.env.FL_NO_SSL ? [] : [basicSsl()]), geminiProxy()],
   server: {
     host: true, // listen on 0.0.0.0 so phones on the same Wi-Fi can connect
     port: 5173,

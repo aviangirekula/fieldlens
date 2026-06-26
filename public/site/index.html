@@ -14,7 +14,7 @@
 <style>
   :root{
     --bg:#0b1020; --bg2:#0f1530; --card:#141b34; --line:#243154;
-    --ink:#eef2ff; --mut:#9fb0d6; --brand:#3b82f6; --brand2:#22d3ee;
+    --ink:#eef2ff; --mut:#9fb0d6; --brand:#3f7ad1; --brand2:#6aa0f5;
     --safe:#22c55e; --caution:#f59e0b; --danger:#ef4444;
     --maxw:1080px;
   }
@@ -71,9 +71,9 @@
   .cam{position:absolute;inset:0;background:
     radial-gradient(120px 120px at 60% 40%, rgba(59,130,246,.25), transparent 70%),
     repeating-linear-gradient(135deg,#2c3550 0 14px,#28324c 14px 28px)}
-  .reticle{position:absolute;left:18%;top:30%;width:64%;height:30%;border:2px solid var(--brand2);
+  .reticle{position:absolute;left:18%;top:30%;width:64%;height:30%;border:2px solid var(--caution);
     border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.28)}
-  .reticle:after{content:"Run capacitor";position:absolute;left:0;top:-26px;background:var(--brand2);
+  .reticle:after{content:"Run capacitor";position:absolute;left:0;top:-26px;background:var(--caution);
     color:#04121a;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px}
   .verdict{position:absolute;left:14px;right:14px;bottom:88px;background:rgba(245,158,11,.16);
     border:1px solid var(--caution);border-radius:12px;padding:11px 12px}
@@ -82,7 +82,7 @@
   .verdict .txt{font-size:12px;color:#fde9c4;margin-top:6px}
   .step{position:absolute;left:14px;right:14px;bottom:18px;background:rgba(15,21,48,.92);
     border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:11.5px}
-  .step b{color:var(--brand2)}
+  .step b{color:var(--brand)}
 
   /* CARDS / GRID */
   .grid{display:grid;gap:18px}
@@ -236,7 +236,7 @@
         <div class="ic">🛡️</div>
         <span class="n">STEP 2</span>
         <h3>Instant safety verdict</h3>
-        <p class="mut">FieldLens identifies the part and returns <b>Safe&nbsp;/&nbsp;Caution&nbsp;/&nbsp;Do&nbsp;Not&nbsp;Touch</b>, erring toward caution when unsure.</p>
+        <p class="mut">FieldLens identifies the part and returns <b>Safe&nbsp;/&nbsp;Caution&nbsp;/&nbsp;Do&nbsp;Not&nbsp;Touch</b> with the plain reason why, and a highlight box color-coded by hazard drawn right on the component. It errs toward caution when unsure.</p>
       </div>
       <div class="card stepcard">
         <div class="ic">🧭</div>
@@ -379,7 +379,7 @@
       <div class="card">
         <div class="ic">🎯</div>
         <h3>Per-step "look here" highlighting</h3>
-        <p class="mut">FieldLens doesn't just describe a step. It anchors a box onto the exact spot in the tech's own photo to look at, step by step. Spatial, in-image guidance a generic chat answer can't reproduce.</p>
+        <p class="mut">FieldLens doesn't just describe a step. It anchors a box onto the exact spot in the tech's own photo, color-coded by hazard (red, amber, green) so the danger reads directly on the equipment. Spatial, in-image guidance a generic chat answer can't reproduce.</p>
       </div>
       <div class="card">
         <div class="ic">🔄</div>
