@@ -304,10 +304,6 @@ export function TrainingWalkthrough({
           </div>
         </>
       )}
-
-      <p className="wt__ai">
-        AI-generated guidance — always verify with a qualified supervisor.
-      </p>
     </section>
   )
 }

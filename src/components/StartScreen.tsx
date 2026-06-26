@@ -45,10 +45,6 @@ export function StartScreen({ onStart, onUpload }: StartScreenProps) {
             Upload a photo instead
           </button>
         </div>
-
-        <p className="start__trust" role="contentinfo">
-          AI-generated guidance — always verify with equipment documentation and a qualified supervisor.
-        </p>
       </main>
     </div>
   )

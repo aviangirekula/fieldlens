@@ -588,20 +588,6 @@
   color: var(--fl-text-secondary);
 }
 
-/* Persistent disclaimer — clean inline, not a glowing banner. */
-.start__trust {
-  margin: 22px auto 0;
-  max-width: 30rem;
-  padding: 10px 14px;
-  border-radius: var(--fl-r-sm);
-  background: var(--fl-surface);
-  border: 1px solid var(--fl-line);
-  font-size: 0.78rem;
-  font-weight: 500;
-  color: var(--fl-text-dim);
-  line-height: 1.45;
-}
-
 .start__note {
   margin: 14px 0 0;
   font-size: 0.78rem;
@@ -1358,22 +1344,6 @@
 .wt__complete .wt__title { margin-top: 12px; }
 .wt__complete .wt__instruction { margin-top: 6px; }
 .wt__complete .wt__controls { margin-top: 22px; }
-
-/* AI-generated label */
-.wt__ai {
-  margin: 14px 0 0;
-  padding: 8px 12px;
-  border-radius: var(--fl-r-sm);
-  background: rgba(255, 255, 255, 0.04);
-  font-size: 0.72rem;
-  line-height: 1.4;
-  color: var(--fl-text-muted);
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
 /* Held sideways (landscape): dock the steps to the right at their normal size,
    and show the whole captured frame (shrunk, not cropped) on the left. */
 @media (orientation: landscape) {

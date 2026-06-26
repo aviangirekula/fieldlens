@@ -99,7 +99,7 @@ const FALLBACK: Knowledge = {
     'Including the manufacturer label helps identify the part.',
     'Early visual inspection catches many problems before they become emergencies.',
   ],
-  quote: "Verify every AI call against the unit's documentation and a qualified supervisor.",
+  quote: "Slow down and read the unit before you reach for anything. Most of the job is seeing what is actually in front of you.",
 }
 
 const STORAGE_KEY = 'fieldlens_inspection_counts'
