@@ -1,628 +1,661 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>FieldLens. AI safety and inspection coaching for new HVAC technicians</title>
-<meta name="description" content="Point your phone at any HVAC component for an instant Safe, Caution, or Do Not Touch verdict and a step by step guided inspection. Computer vision, runs in any phone browser, no install." />
-<meta name="theme-color" content="#0e1014" />
-<meta property="og:title" content="FieldLens. AI safety and inspection coaching for HVAC technicians" />
-<meta property="og:description" content="Point your phone at a component, get an instant safety verdict and a guided inspection. Runs in any phone browser, nothing to install." />
-<meta property="og:type" content="website" />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FieldLens — A second set of eyes on every first job</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root{
-    /* Surfaces - solid near-black, no mesh, no gradients. */
-    --bg:#0e1014; --bg-2:#15181d; --surface:#171a20; --surface-2:#1d212a;
-    --line:rgba(255,255,255,.09); --line-2:rgba(255,255,255,.14);
-    /* Text - high contrast on dark. */
-    --ink:#f3f5f8; --ink-2:#c2c8d2; --mut:#9aa1ad; --mut-2:#7f8692;
-    /* ONE steel-blue accent, as a single-hue family tuned for AA contrast.
-       --brand: identity (large text, icons, borders) · passes 3:1
-       --brand-text: small accent text and links · passes 4.5:1
-       --brand-ink: button fill behind white text · passes 4.5:1 */
-    --brand:#3f7ad1; --brand-text:#6fa0e6; --brand-ink:#2f63b0;
-    --brand-dim:rgba(63,122,209,.12); --brand-border:rgba(63,122,209,.34);
-    /* SAFETY STATUS COLORS - used ONLY to signal safety state, never decoration.
-       Green only ever means Safe. */
-    --safe:#2fb866; --caution:#e89a26; --danger:#e5484d;
-    --shadow-card:0 1px 3px rgba(0,0,0,.45);
-    --shadow-pop:0 14px 40px -12px rgba(0,0,0,.7);
-    --maxw:1100px; --measure:68ch;
-  }
-  *{box-sizing:border-box}
-  html{scroll-behavior:smooth}
-  body{margin:0;font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
-    background:var(--bg);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased;
-    text-rendering:optimizeLegibility}
-  a{color:inherit;text-decoration:none}
-  img,svg,video{max-width:100%;height:auto;display:block}
-  h1,h2,h3{line-height:1.14;margin:0;letter-spacing:-.02em;font-weight:800}
-  p{margin:0}
-
-  /* Accessibility primitives */
-  .skip-link{position:absolute;left:-9999px;top:0;z-index:200;background:var(--surface-2);
-    color:var(--ink);padding:11px 16px;border-radius:10px;border:1px solid var(--line-2);font-weight:600}
-  .skip-link:focus{left:12px;top:12px}
-  :focus-visible{outline:2px solid var(--brand-text);outline-offset:2px;border-radius:6px}
-  @media (prefers-reduced-motion: reduce){
-    *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;
-      transition-duration:.01ms!important;scroll-behavior:auto!important}
-  }
-
-  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
-  .mut{color:var(--mut)}
-  section{padding:104px 0;border-top:1px solid var(--line)}
-  .eyebrow{display:block;color:var(--brand-text);font-weight:700;letter-spacing:.13em;
-    text-transform:uppercase;font-size:12.5px;margin-bottom:14px}
-  .sec-head{max-width:660px;margin-bottom:44px}
-  .sec-head h2{font-size:clamp(26px,3.4vw,36px)}
-  .sec-head p{margin-top:14px;font-size:17px;max-width:var(--measure)}
-
-  /* Buttons - 44px min target, depth from border + micro-shadow, never glow. */
-  .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;border-radius:11px;
-    padding:13px 20px;min-height:46px;font-weight:600;font-size:15px;border:1px solid transparent;
-    cursor:pointer;transition:background .18s,border-color .18s,transform .08s;white-space:nowrap}
-  .btn:active{transform:translateY(1px)}
-  .btn-primary{background:var(--brand-ink);color:#fff;box-shadow:var(--shadow-card)}
-  .btn-primary:hover{background:#356cbf}
-  .btn-ghost{background:transparent;border-color:var(--line-2);color:var(--ink)}
-  .btn-ghost:hover{background:var(--bg-2);border-color:var(--mut-2)}
-  .btn svg{width:17px;height:17px}
-
-  /* Icon tile - replaces every emoji. */
-  .ic{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;flex:none;
-    background:var(--surface-2);border:1px solid var(--line);color:var(--brand);margin-bottom:18px}
-  .ic svg{width:23px;height:23px;stroke:currentColor;stroke-width:1.7;fill:none;
-    stroke-linecap:round;stroke-linejoin:round}
-
-  /* NAV */
-  header{position:sticky;top:0;z-index:50;backdrop-filter:blur(12px);
-    background:rgba(14,16,20,.82);border-bottom:1px solid var(--line)}
-  .nav{display:flex;align-items:center;justify-content:space-between;height:66px}
-  .logo{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:-.01em;font-size:17px}
-  .logo .mark{width:24px;height:24px;border-radius:7px;background:var(--brand);display:grid;place-items:center}
-  .logo .mark svg{width:15px;height:15px;stroke:#fff;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
-  .navlinks{display:flex;gap:28px;align-items:center}
-  .navlinks a{color:var(--mut);font-size:14.5px;font-weight:500;transition:color .15s}
-  .navlinks a:hover{color:var(--ink)}
-  .navlinks .btn{color:#fff}
-  .navtoggle{display:none;background:none;border:0;color:var(--ink);cursor:pointer;width:44px;height:44px;
-    align-items:center;justify-content:center}
-  .navtoggle svg{width:24px;height:24px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round}
-  @media(max-width:860px){
-    .navlinks{display:none;position:absolute;top:66px;left:0;right:0;flex-direction:column;gap:0;
-      background:var(--bg-2);border-bottom:1px solid var(--line);padding:8px 0}
-    .navlinks.open{display:flex}
-    .navlinks a{padding:14px 24px;width:100%;min-height:44px;display:flex;align-items:center}
-    .navlinks .btn{margin:8px 24px;width:calc(100% - 48px)}
-    .navtoggle{display:flex}
-  }
-
-  /* HERO */
-  .hero{display:grid;grid-template-columns:1.1fr .9fr;gap:56px;align-items:center;padding:92px 0 84px}
-  .hero h1{font-size:clamp(33px,4.8vw,53px);margin:18px 0 20px}
-  .hero p.lead{font-size:18.5px;color:var(--ink-2);max-width:33em}
-  .cta-row{display:flex;gap:12px;margin-top:30px;flex-wrap:wrap}
-  .hero-trust{margin-top:26px;font-size:14px;color:var(--mut);display:flex;flex-wrap:wrap;gap:8px 18px}
-  .hero-trust span{display:inline-flex;align-items:center;gap:7px}
-  .hero-trust svg{width:15px;height:15px;stroke:var(--brand);stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
-  @media(max-width:860px){.hero{grid-template-columns:1fr;gap:44px;padding:60px 0 44px}}
-
-  /* PHONE SCHEMATIC - a deliberate illustration of the interface, not a screenshot. */
-  .device{justify-self:center;width:264px;height:540px;border-radius:38px;background:#05070b;
-    border:10px solid #1b1f27;box-shadow:var(--shadow-pop);position:relative;overflow:hidden}
-  .device .screen{position:absolute;inset:0;border-radius:28px;overflow:hidden;background:#0c0e12}
-  .cam{position:absolute;inset:0;background:repeating-linear-gradient(135deg,#23272f 0 15px,#1f232b 15px 30px)}
-  .reticle{position:absolute;left:17%;top:27%;width:66%;height:31%;border:2px solid var(--caution);
-    border-radius:12px;box-shadow:0 0 0 9999px rgba(6,7,10,.5)}
-  .reticle .tag{position:absolute;left:-2px;top:-27px;background:var(--caution);color:#1a1205;font-size:11px;
-    font-weight:700;padding:3px 8px;border-radius:6px;white-space:nowrap}
-  .verdict{position:absolute;left:14px;right:14px;bottom:86px;background:var(--surface);
-    border:1px solid var(--line-2);border-left:3px solid var(--caution);border-radius:12px;padding:11px 13px}
-  .verdict .vtag{display:inline-flex;align-items:center;gap:5px;color:var(--caution);font-weight:700;
-    font-size:11px;letter-spacing:.04em}
-  .verdict .vtag svg{width:13px;height:13px;stroke:currentColor;stroke-width:2;fill:none}
-  .verdict .vtxt{font-size:11.5px;color:var(--ink-2);margin-top:6px;line-height:1.45}
-  .step{position:absolute;left:14px;right:14px;bottom:16px;background:var(--surface-2);
-    border:1px solid var(--line);border-radius:12px;padding:10px 13px;font-size:11.5px;color:var(--ink-2)}
-  .step b{color:var(--brand-text);font-weight:700}
-  .device-cap{margin-top:14px;text-align:center;font-size:12px;color:var(--mut-2)}
-
-  /* TRUST STRIP */
-  .strip{display:flex;flex-wrap:wrap;gap:14px}
-  .strip .chip{display:inline-flex;align-items:center;gap:9px;background:var(--surface);
-    border:1px solid var(--line);border-radius:11px;padding:12px 16px;font-size:14px;color:var(--ink-2)}
-  .strip .chip svg{width:17px;height:17px;stroke:var(--brand);stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
-
-  /* GRID + CARDS */
-  .grid{display:grid;gap:20px}
-  .g3{grid-template-columns:repeat(3,1fr)}
-  .g2{grid-template-columns:repeat(2,1fr)}
-  @media(max-width:860px){.g3,.g2{grid-template-columns:1fr}}
-  .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:26px;
-    box-shadow:var(--shadow-card)}
-  .card h3{font-size:18.5px;margin-bottom:9px}
-  .card p{color:var(--mut);font-size:15px}
-  .stat{font-size:34px;font-weight:800;color:var(--ink);letter-spacing:-.02em}
-  .stat.safe{color:var(--safe)}
-  .source{font-size:12.5px;color:var(--mut-2);margin-top:18px}
-  .source a{color:var(--brand-text)}
-
-  .stepn{font-size:12.5px;font-weight:700;color:var(--brand-text);letter-spacing:.08em;display:block;margin-bottom:7px}
-
-  /* IN ACTION - real product capture (loop) + verdict frame. */
-  .shots{display:grid;grid-template-columns:1.5fr 1fr;gap:20px;align-items:start}
-  @media(max-width:860px){.shots{grid-template-columns:1fr}}
-  .shot{margin:0}
-  .shot img{width:100%;height:auto;border-radius:16px;border:1px solid var(--line-2);
-    box-shadow:var(--shadow-card);background:var(--surface)}
-  .shot figcaption{margin-top:13px;font-size:13px;color:var(--mut)}
-
-  /* SAFETY */
-  .safety{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:38px}
-  .legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
-  .lvl{display:inline-flex;align-items:center;gap:9px;font-size:13.5px;font-weight:700;padding:9px 14px;
-    border-radius:11px;border:1px solid}
-  .lvl svg{width:16px;height:16px;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
-  .lvl.safe{color:var(--safe);border-color:rgba(47,184,102,.4);background:rgba(47,184,102,.09)}
-  .lvl.caution{color:var(--caution);border-color:rgba(232,154,38,.4);background:rgba(232,154,38,.09)}
-  .lvl.danger{color:var(--danger);border-color:rgba(229,72,77,.42);background:rgba(229,72,77,.10)}
-  .lvl svg{stroke:currentColor}
-
-  /* lists */
-  ul.clean{list-style:none;padding:0;margin:0}
-  ul.clean li{position:relative;padding-left:28px;margin:13px 0;color:var(--ink-2);font-size:15.5px}
-  ul.clean li svg{position:absolute;left:0;top:4px;width:17px;height:17px;stroke:var(--brand);
-    stroke-width:1.9;fill:none;stroke-linecap:round;stroke-linejoin:round}
-
-  /* FOUNDER */
-  .person{display:flex;gap:18px;align-items:flex-start}
-  .avatar{width:66px;height:66px;border-radius:15px;flex:none;background:var(--surface-2);
-    border:1px solid var(--line-2);display:grid;place-items:center;font-weight:800;font-size:23px;color:var(--brand-text)}
-  .person a.link{color:var(--brand-text);font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:6px;margin-top:10px}
-  .person a.link svg{width:15px;height:15px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
-
-  /* FAQ - native accordion, keyboard accessible. */
-  .faq details{border:1px solid var(--line);border-radius:13px;background:var(--surface);
-    padding:0 20px;margin-bottom:12px;transition:border-color .15s}
-  .faq details[open]{border-color:var(--line-2)}
-  .faq summary{list-style:none;cursor:pointer;padding:19px 0;font-weight:600;font-size:16px;
-    display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px}
-  .faq summary::-webkit-details-marker{display:none}
-  .faq summary .chev{width:18px;height:18px;flex:none;stroke:var(--mut);stroke-width:2;fill:none;
-    stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
-  .faq details[open] summary .chev{transform:rotate(180deg)}
-  .faq .ans{padding:0 0 20px;color:var(--mut);font-size:15px;max-width:var(--measure)}
-
-  /* FINAL CTA */
-  .final{border:1px solid var(--line-2);border-radius:22px;background:var(--surface);padding:54px 40px;
-    text-align:center}
-  .final h2{font-size:clamp(26px,3.4vw,36px)}
-  .final p{color:var(--mut);margin:14px auto 0;max-width:46ch;font-size:17px}
-  .final .cta-row{justify-content:center;margin-top:30px}
-
-  /* FOOTER */
-  footer{border-top:1px solid var(--line);padding:64px 0 48px}
-  .foot-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:32px}
-  @media(max-width:860px){.foot-grid{grid-template-columns:1fr 1fr}}
-  @media(max-width:520px){.foot-grid{grid-template-columns:1fr}}
-  .foot-col h4{font-size:12.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--mut-2);
-    font-weight:700;margin:0 0 14px}
-  .foot-col a{display:block;color:var(--mut);font-size:14.5px;margin:9px 0;transition:color .15s}
-  .foot-col a:hover{color:var(--ink)}
-  .foot-brand p{color:var(--mut);font-size:14px;margin-top:12px;max-width:32ch}
-  .foot-bottom{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;align-items:center;
-    margin-top:48px;padding-top:26px;border-top:1px solid var(--line);font-size:13px;color:var(--mut)}
-  .foot-bottom a{color:var(--brand-text)}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{margin:0;background:#0b0c0e;color:#f2f3f5;font-family:'Schibsted Grotesk',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overflow-x:hidden;}
+::selection{background:rgba(63,122,209,0.35);}
+a{color:inherit;text-decoration:none;}
+button{font-family:inherit;}
+summary::-webkit-details-marker{display:none;}
+/* hover states (override inline base colors) */
+.lnk:hover{color:#f2f3f5!important;}
+.lnk-soft:hover{color:#fff!important;}
+.btn-pri:hover{background:#4f88de!important;transform:translateY(-1px);}
+/* responsive nav */
+.nav-burger{display:none;}
+#navMenu{display:none;}
+@media (max-width:860px){.nav-links{display:none;}.nav-burger{display:inline-flex!important;}}
+@media (min-width:861px){#navMenu{display:none!important;}}
+/* animation keyframes */
+@keyframes flPulse{0%,100%{opacity:.95;}50%{opacity:.35;}}
+@keyframes flReveal{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
+@keyframes flkCapIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+@keyframes flkGrid{from{background-position:0 0;}to{background-position:38px 38px;}}
+@keyframes flkDrift{from{transform:scale(1);}to{transform:scale(1.035);}}
+@keyframes flkScanV{0%{top:-3%;opacity:0;}8%{opacity:.5;}92%{opacity:.5;}100%{top:101%;opacity:0;}}
+@keyframes flkCalloutIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;}}
+@keyframes flkUnderline{from{transform:scaleX(0);}to{transform:scaleX(1);}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;scroll-behavior:auto!important;}}
+@media print{[data-reveal]{animation:none!important;opacity:1!important;transform:none!important;}}
 </style>
 </head>
 <body>
+<a id="top"></a>
 
-<a class="skip-link" href="#main">Skip to content</a>
-
-<header>
-  <div class="wrap nav">
-    <a class="logo" href="#top" aria-label="FieldLens home">
-      <span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></span>
-      FieldLens
+<!-- NAV -->
+<header style="position:sticky;top:0;z-index:50;background:rgba(11,12,14,0.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,0.06);">
+  <nav style="max-width:1160px;margin:0 auto;padding:0 24px;height:62px;display:flex;align-items:center;justify-content:space-between;">
+    <a href="#top" style="display:flex;align-items:center;gap:9px;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="#3f7ad1" stroke-width="1.8"></circle><circle cx="12" cy="12" r="3" fill="#3f7ad1"></circle></svg>
+      <span style="font-weight:600;font-size:1.02rem;letter-spacing:-0.01em;">FieldLens</span>
     </a>
-    <button class="navtoggle" aria-label="Open menu" aria-expanded="false" aria-controls="nl" onclick="var n=document.getElementById('nl');var o=n.classList.toggle('open');this.setAttribute('aria-expanded',o);this.setAttribute('aria-label',o?'Close menu':'Open menu')">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
-    </button>
-    <nav class="navlinks" id="nl" aria-label="Primary">
-      <a href="#problem">Problem</a>
-      <a href="#how">How it works</a>
-      <a href="#action">In action</a>
-      <a href="#evidence">Evidence</a>
-      <a href="#safety">Safety</a>
-      <a href="#faq">FAQ</a>
-      <a class="btn btn-primary" href="/" target="_blank" rel="noopener">Try the live demo</a>
-    </nav>
+    <div class="nav-links" style="display:flex;align-items:center;gap:28px;">
+      <a class="lnk" href="#problem" style="font-size:0.9rem;color:#a1a6ad;white-space:nowrap;transition:color .2s;">Problem</a>
+      <a class="lnk" href="#how" style="font-size:0.9rem;color:#a1a6ad;white-space:nowrap;transition:color .2s;">How it works</a>
+      <a class="lnk" href="#evidence" style="font-size:0.9rem;color:#a1a6ad;white-space:nowrap;transition:color .2s;">Evidence</a>
+      <a class="lnk" href="#safety" style="font-size:0.9rem;color:#a1a6ad;white-space:nowrap;transition:color .2s;">Safety</a>
+      <a class="lnk" href="#roadmap" style="font-size:0.9rem;color:#a1a6ad;white-space:nowrap;transition:color .2s;">Roadmap</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <a class="btn-pri" href="#workflow" style="display:inline-flex;align-items:center;gap:7px;background:#3f7ad1;color:#fff;padding:9px 16px;border-radius:9px;font-size:0.88rem;font-weight:600;white-space:nowrap;transition:background .2s,transform .2s;">Try the live demo</a>
+      <button id="navBurger" class="nav-burger" aria-label="Menu" style="align-items:center;justify-content:center;width:38px;height:38px;border-radius:9px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:#f2f3f5;cursor:pointer;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+      </button>
+    </div>
+  </nav>
+  <div id="navMenu" style="border-top:1px solid rgba(255,255,255,0.06);padding:10px 24px 18px;flex-direction:column;gap:4px;">
+    <a href="#problem" style="padding:11px 0;font-size:0.98rem;color:#cdd2d8;border-bottom:1px solid rgba(255,255,255,0.05);">Problem</a>
+    <a href="#how" style="padding:11px 0;font-size:0.98rem;color:#cdd2d8;border-bottom:1px solid rgba(255,255,255,0.05);">How it works</a>
+    <a href="#evidence" style="padding:11px 0;font-size:0.98rem;color:#cdd2d8;border-bottom:1px solid rgba(255,255,255,0.05);">Evidence</a>
+    <a href="#safety" style="padding:11px 0;font-size:0.98rem;color:#cdd2d8;border-bottom:1px solid rgba(255,255,255,0.05);">Safety</a>
+    <a href="#roadmap" style="padding:11px 0;font-size:0.98rem;color:#cdd2d8;">Roadmap</a>
   </div>
 </header>
 
-<a id="top"></a>
-<main id="main">
-
-  <!-- HERO -->
-  <div class="wrap">
-    <section class="hero" style="border-top:0">
-      <div>
-        <span class="eyebrow">Open beta, live now</span>
-        <h1>Know if it is safe to touch. Then exactly how to inspect it.</h1>
-        <p class="lead">FieldLens is a safety and inspection coach for first week HVAC technicians. Point your phone at a component. It identifies the part, tells you whether it is safe to inspect, and walks you through the check step by step. It runs in any phone browser, with nothing to install.</p>
-        <div class="cta-row">
-          <a class="btn btn-primary" href="/" target="_blank" rel="noopener">
-            Try the live demo
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-          </a>
-          <a class="btn btn-ghost" href="#how">See how it works</a>
-        </div>
-        <div class="hero-trust">
-          <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg> Any phone browser, no install</span>
-          <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg> Computer vision, not a chatbot</span>
-          <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg> Errs toward caution by design</span>
-        </div>
+<!-- HERO -->
+<section style="padding:clamp(48px,8vh,96px) 0 clamp(64px,9vh,112px);position:relative;">
+  <div style="max-width:1160px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:clamp(40px,6vw,84px);align-items:center;">
+    <div data-reveal style="animation:flReveal .7s both;animation-timeline:view();animation-range:entry 0% cover 24%;">
+      <div style="display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.02);border-radius:999px;padding:6px 13px;font-family:'JetBrains Mono',monospace;font-size:0.68rem;letter-spacing:0.06em;color:#a1a6ad;">
+        <span style="width:6px;height:6px;border-radius:50%;background:#3f7ad1;animation:flPulse 2.4s ease-in-out infinite;"></span>OPEN BETA · EARLY PROTOTYPE
       </div>
+      <h1 style="font-size:clamp(2.5rem,5.6vw,4rem);font-weight:600;line-height:1.04;letter-spacing:-0.03em;margin:22px 0 0;max-width:14ch;">A second set of eyes on every first job.</h1>
+      <p style="font-size:clamp(1.05rem,1.6vw,1.2rem);line-height:1.55;color:#a1a6ad;max-width:52ch;margin:22px 0 0;">FieldLens points a phone camera at HVAC equipment, flags the hazards a new technician cannot see yet, and walks them through a safe inspection. It runs in any phone browser. Nothing to install.</p>
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin:30px 0 0;">
+        <a class="btn-pri" href="#workflow" style="display:inline-flex;align-items:center;gap:8px;background:#3f7ad1;color:#fff;padding:13px 22px;border-radius:10px;font-size:0.98rem;font-weight:600;transition:background .2s,transform .2s;">Try the live demo
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+        </a>
+        <a class="lnk-soft" href="#how" style="display:inline-flex;align-items:center;gap:8px;color:#cdd2d8;padding:13px 16px;border-radius:10px;font-size:0.98rem;font-weight:500;transition:color .2s;">See how it works</a>
+      </div>
+      <p style="margin:30px 0 0;padding-top:22px;border-top:1px solid rgba(255,255,255,0.07);font-size:0.92rem;line-height:1.6;color:#6b7178;max-width:46ch;">Built by a computer-vision and machine-learning researcher, for the technician on the truck, not the student in the lab.</p>
+    </div>
 
-      <div>
-        <div class="device" role="img" aria-label="Illustration of the FieldLens interface: a run capacitor outlined in amber with a Caution verdict and the first inspection step.">
-          <div class="screen">
-            <div class="cam" aria-hidden="true"></div>
-            <div class="reticle" aria-hidden="true"><span class="tag">Run capacitor</span></div>
-            <div class="verdict" aria-hidden="true">
-              <span class="vtag"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg> CAUTION</span>
-              <div class="vtxt">May hold a charge. Look only. Do not touch without lockout, tagout, and a qualified supervisor.</div>
+    <!-- HERO PRODUCT MOMENT -->
+    <div data-reveal style="animation:flReveal .7s both;animation-timeline:view();animation-range:entry 0% cover 24%;display:flex;justify-content:center;">
+      <div style="position:relative;width:290px;max-width:84vw;">
+        <div style="position:relative;width:100%;aspect-ratio:9 / 19;background:#0e0f12;border:1px solid rgba(255,255,255,0.1);border-radius:40px;padding:9px;box-shadow:0 40px 90px -36px rgba(0,0,0,0.85),inset 0 0 0 1px rgba(255,255,255,0.03);">
+          <div style="position:relative;width:100%;height:100%;border-radius:32px;overflow:hidden;background:#0a0b0d;">
+            <div style="position:absolute;inset:0;background:repeating-linear-gradient(46deg,#15171b 0 14px,#101216 14px 28px);"></div>
+            <div style="position:absolute;inset:0;background:radial-gradient(130% 80% at 50% 28%,rgba(0,0,0,0) 38%,rgba(0,0,0,0.6) 100%);"></div>
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;"><span style="font-family:'JetBrains Mono',monospace;font-size:0.58rem;letter-spacing:0.12em;color:rgba(255,255,255,0.26);line-height:1.7;">CAMERA FEED<br>OUTDOOR CONDENSER</span></div>
+            <div style="position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:0.58rem;letter-spacing:0.08em;color:rgba(255,255,255,0.5);">
+              <span>FIELDLENS</span><span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:6px;height:6px;border-radius:50%;background:#3f7ad1;animation:flPulse 2s infinite;"></span>LIVE</span>
             </div>
-            <div class="step" aria-hidden="true"><b>Step 1 of 6.</b> Confirm power is off at the disconnect before touching anything.</div>
+            <div style="position:absolute;left:23%;top:38%;width:54%;height:23%;border:2px solid #e5484d;border-radius:6px;">
+              <div style="position:absolute;top:-25px;left:-2px;background:#e5484d;color:#fff;font-family:'JetBrains Mono',monospace;font-size:0.56rem;letter-spacing:0.05em;padding:4px 7px;border-radius:5px;font-weight:500;white-space:nowrap;">DO-NOT-TOUCH</div>
+            </div>
+            <div style="position:absolute;left:0;right:0;bottom:0;background:rgba(14,16,19,0.95);backdrop-filter:blur(8px);border-top:1px solid rgba(255,255,255,0.08);padding:14px 16px 17px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#e5484d" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.4-3 7.4-7 9-4-1.6-7-4.6-7-9V6l7-3z"></path><path d="M12 9v4M12 16.5h.01"></path></svg>
+                <span style="font-size:0.8rem;font-weight:600;">Run capacitor flagged</span>
+              </div>
+              <p style="margin:7px 0 0;font-size:0.71rem;line-height:1.5;color:#a1a6ad;">Possible stored charge. Confirm the disconnect is pulled before contact.</p>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:11px;">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:0.56rem;color:#6b7178;letter-spacing:0.08em;">STEP 2 OF 6</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:0.56rem;color:#6b7178;letter-spacing:0.08em;">GUIDED INSPECTION</span>
+              </div>
+              <div style="height:3px;background:rgba(255,255,255,0.09);border-radius:2px;margin-top:8px;overflow:hidden;"><div style="height:100%;width:33%;background:#3f7ad1;border-radius:2px;"></div></div>
+            </div>
           </div>
         </div>
-        <p class="device-cap">Interface illustration. The live demo runs on your own phone.</p>
+        <div style="position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);width:78%;height:30px;background:radial-gradient(50% 100% at 50% 0,rgba(0,0,0,0.5),transparent 70%);filter:blur(4px);"></div>
       </div>
-    </section>
+    </div>
   </div>
+</section>
 
-  <!-- TRUST STRIP -->
-  <section style="padding:36px 0">
-    <div class="wrap strip">
-      <span class="chip"><svg viewBox="0 0 24 24"><path d="M12 2 4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6Z"/></svg> Safety first verdict on every scan</span>
-      <span class="chip"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg> Works on the phone a tech already carries</span>
-      <span class="chip"><svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2Z"/><path d="M9 21h6"/></svg> Built by a computer vision and ML researcher</span>
+<!-- PROBLEM -->
+<section id="problem" style="padding:clamp(72px,11vh,140px) 0;border-top:1px solid rgba(255,255,255,0.06);">
+  <div style="max-width:1160px;margin:0 auto;padding:0 24px;">
+    <div data-reveal style="animation:flReveal .7s both;animation-timeline:view();animation-range:entry 0% cover 24%;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:#6b7178;">The problem</div>
+      <h2 style="font-size:clamp(1.9rem,3.8vw,2.8rem);font-weight:600;line-height:1.08;letter-spacing:-0.02em;margin:18px 0 0;max-width:18ch;">New techs get put on live equipment fast.</h2>
+      <p style="font-size:1.08rem;line-height:1.65;color:#a1a6ad;max-width:62ch;margin:20px 0 0;">A first-year technician can be sent to a rooftop unit alone within weeks. The supervisor who would catch a charged capacitor or a live disconnect is usually a phone call away, in the middle of another job.</p>
     </div>
-  </section>
-
-  <!-- PROBLEM -->
-  <section id="problem">
-    <div class="wrap">
-      <div class="sec-head">
-        <span class="eyebrow">The problem</span>
-        <h2>The trades are short handed, and the field is unforgiving.</h2>
-        <p class="mut">New HVAC techs are put on live equipment fast, often without a mentor at their shoulder. Mistakes are expensive, callbacks hurt, and some are dangerous.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;margin-top:48px;">
+      <div data-reveal style="animation:flReveal .7s both;animation-timeline:view();animation-range:entry 0% cover 24%;background:#141619;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:26px;">
+        <div style="font-size:clamp(2.4rem,4vw,3rem);font-weight:600;letter-spacing:-0.03em;line-height:1;">37,700</div>
+        <p style="margin:14px 0 0;font-size:0.96rem;line-height:1.55;color:#a1a6ad;">projected openings each year for HVAC mechanics and installers in the US, a wave of brand-new hands on equipment.</p>
+        <div style="margin-top:16px;font-family:'JetBrains Mono',monospace;font-size:0.62rem;letter-spacing:0.06em;color:#6b7178;">SOURCE: U.S. BUREAU OF LABOR STATISTICS</div>
       </div>
-      <div class="grid g3">
-        <div class="card">
-          <div class="stat">~37,700</div>
-          <h3>openings every year</h3>
-          <p>U.S. HVAC technician openings projected each year from 2023 to 2033. Demand keeps outpacing trained, confident workers.</p>
-        </div>
-        <div class="card">
-          <div class="stat">Live voltage</div>
-          <h3>on day one</h3>
-          <p>First year techs work next to capacitors and contactors that can hold a lethal charge, frequently with no one to ask.</p>
-        </div>
-        <div class="card">
-          <div class="stat">Misdiagnosis</div>
-          <h3>is the costly default</h3>
-          <p>Condemning a compressor when it is a fifteen dollar capacitor, or skipping a discharge step. The gap between knows and new is huge.</p>
-        </div>
+      <div data-reveal style="animation:flReveal .7s both;animation-timeline:view();animation-range:entry 0% cover 24%;background:#141619;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:26px;">
+        <div style="font-size:clamp(2.4rem,4vw,3rem);font-weight:600;letter-spacing:-0.03em;line-height:1;">Day one</div>
+        <p style="margin:14px 0 0;font-size:0.96rem;line-height:1.55;color:#a1a6ad;">is when a new tech can first meet live voltage, often with no second person on site to call it.</p>
+        <div style="margin-top:16px;font-family:'JetBrains Mono',monospace;font-size:0.62rem;letter-spacing:0.06em;color:#6b7178;">RISK · UNSUPERVISED</div>
       </div>
-      <p class="source">Source. U.S. Bureau of Labor Statistics, Occupational Outlook Handbook, HVACR Mechanics and Installers.</p>
-    </div>
-  </section>
-
-  <!-- HOW IT WORKS -->
-  <section id="how">
-    <div class="wrap">
-      <div class="sec-head">
-        <span class="eyebrow">How it works</span>
-        <h2>A mentor in your pocket, in three steps.</h2>
-      </div>
-      <div class="grid g3">
-        <div class="card">
-          <div class="ic"><svg viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 1 2-2h2l1.5-2h7L19 6h0a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><circle cx="12" cy="13" r="3.5"/></svg></div>
-          <span class="stepn">STEP 1</span>
-          <h3>Point or upload</h3>
-          <p>Aim your phone camera at the component, or upload a photo. No app install. It runs in the browser the tech already has open.</p>
-        </div>
-        <div class="card">
-          <div class="ic"><svg viewBox="0 0 24 24"><path d="M12 2 4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6Z"/><path d="M9 12l2 2 4-4"/></svg></div>
-          <span class="stepn">STEP 2</span>
-          <h3>Instant safety verdict</h3>
-          <p>FieldLens identifies the part and returns Safe, Caution, or Do Not Touch with the plain reason why, and a highlight box drawn on the component, colored by hazard. When unsure, it chooses the more cautious verdict.</p>
-        </div>
-        <div class="card">
-          <div class="ic"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg></div>
-          <span class="stepn">STEP 3</span>
-          <h3>Guided walkthrough</h3>
-          <p>A step by step inspection drill. What to look at, what normal looks like, the common mistake to avoid, and a field tip, with the box moving to each spot.</p>
-        </div>
+      <div data-reveal style="animation:flReveal .7s both;animation-timeline:view();animation-range:entry 0% cover 24%;background:#141619;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:26px;">
+        <div style="font-size:clamp(2.4rem,4vw,3rem);font-weight:600;letter-spacing:-0.03em;line-height:1;">One miss</div>
+        <p style="margin:14px 0 0;font-size:0.96rem;line-height:1.55;color:#a1a6ad;">a misread component turns into a callback, a damaged part, or an injury. The cost lands on the tech and the shop.</p>
+        <div style="margin-top:16px;font-family:'JetBrains Mono',monospace;font-size:0.62rem;letter-spacing:0.06em;color:#6b7178;">COST · MISDIAGNOSIS</div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- IN ACTION -->
-  <section id="action">
-    <div class="wrap">
-      <div class="sec-head">
-        <span class="eyebrow">In action</span>
-        <h2>See the verdict land on real equipment.</h2>
-        <p class="mut">The strongest proof is the product itself. The clips and frames below come from the live app, not a mockup.</p>
+<!-- HOW IT WORKS -->
+<section id="how" style="padding:clamp(72px,11vh,140px) 0;border-top:1px solid rgba(255,255,255,0.06);">
+  <div style="max-width:1160px;margin:0 auto;padding:0 24px;">
+    <div data-reveal style="animation:flReveal .7s both;animation-timeline:view();animation-range:entry 0% cover 24%;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:#6b7178;">How it works</div>
+      <h2 style="font-size:clamp(1.9rem,3.8vw,2.8rem);font-weight:600;line-height:1.08;letter-spacing:-0.02em;margin:18px 0 0;max-width:16ch;">Point, flag, inspect.</h2>
+      <p style="font-size:1.08rem;line-height:1.65;color:#a1a6ad;max-width:60ch;margin:20px 0 0;">Three steps, in the browser the technician already has open. No app, no login wall.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:18px;margin-top:48px;">
+
+      <div data-reveal style="animation:flReveal .7s both;animation-timeline:view();animation-range:entry 0% cover 24%;background:#141619;border:1px solid rgba(255,255,255,0.07);border-radius:18px;padding:24px;display:flex;flex-direction:column;">
+        <div style="height:128px;border-radius:12px;border:1px solid rgba(255,255,255,0.07);background:repeating-linear-gradient(46deg,#15171b 0 12px,#101216 12px 24px);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+          <div style="position:absolute;inset:0;background:radial-gradient(120% 80% at 50% 40%,transparent 40%,rgba(0,0,0,0.5));"></div>
+          <div style="width:70px;height:70px;border:2px solid rgba(63,122,209,0.7);border-radius:10px;position:relative;"></div>
+          <span style="position:absolute;bottom:9px;left:10px;font-family:'JetBrains Mono',monospace;font-size:0.54rem;letter-spacing:0.08em;color:rgba(255,255,255,0.4);">FRAME LOCK</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:9px;margin-top:18px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3f7ad1" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"></rect><path d="M8 7l1.5-2h5L16 7"></path><circle cx="12" cy="13" r="3.4"></circle></svg>
+          <h3 style="font-size:1.12rem;font-weight:600;margin:0;">Point the phone</h3>
+        </div>
+        <p style="margin:11px 0 0;font-size:0.95rem;line-height:1.6;color:#a1a6ad;">Open FieldLens and aim the camera at the component. It reads the unit from the live frame.</p>
       </div>
-      <div class="shots">
-        <figure class="shot shot--wide">
-          <img src="/site/assets/demo.webp" width="1120" height="648"
-               decoding="async" loading="lazy"
-               alt="FieldLens guiding an AC condenser inspection. The unit is outlined on the left while the panel on the right shows the safety note and the current step, advancing as the drill plays." />
-          <figcaption>Live capture. An AC condenser inspection, guided step by step.</figcaption>
-        </figure>
-        <figure class="shot">
-          <img src="/site/assets/verdict.webp" width="1400" height="1051"
-               decoding="async" loading="lazy"
-               alt="FieldLens verdict screen. A Caution Required verdict on an AC condenser unit, with the reason that the disconnect box is closed so the unit should be assumed energized." />
-          <figcaption>The instant verdict, with the plain reason why.</figcaption>
-        </figure>
+
+      <div data-reveal style="animation:flReveal .7s both;animation-timeline:view();animation-range:entry 0% cover 24%;background:#141619;border:1px solid rgba(255,255,255,0.07);border-radius:18px;padding:24px;display:flex;flex-direction:column;">
+        <div style="height:128px;border-radius:12px;border:1px solid rgba(255,255,255,0.07);background:repeating-linear-gradient(46deg,#15171b 0 12px,#101216 12px 24px);position:relative;overflow:hidden;">
+          <div style="position:absolute;inset:0;background:radial-gradient(120% 80% at 50% 40%,transparent 40%,rgba(0,0,0,0.5));"></div>
+          <div style="position:absolute;left:18%;top:30%;width:40%;height:40%;border:2px solid #e5484d;border-radius:5px;"></div>
+          <div style="position:absolute;left:18%;top:calc(30% - 21px);background:#e5484d;color:#fff;font-family:'JetBrains Mono',monospace;font-size:0.5rem;padding:3px 5px;border-radius:4px;white-space:nowrap;">DO-NOT-TOUCH</div>
+          <div style="position:absolute;right:13%;bottom:20%;width:26%;height:30%;border:2px solid #f2a93b;border-radius:5px;"></div>
+          <div style="position:absolute;right:13%;bottom:calc(20% + 30% + 3px);background:#f2a93b;color:#0b0c0e;font-family:'JetBrains Mono',monospace;font-size:0.5rem;padding:3px 5px;border-radius:4px;white-space:nowrap;font-weight:600;">CAUTION</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:9px;margin-top:18px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3f7ad1" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          <h3 style="font-size:1.12rem;font-weight:600;margin:0;">It flags what it sees</h3>
+        </div>
+        <p style="margin:11px 0 0;font-size:0.95rem;line-height:1.6;color:#a1a6ad;">Visible hazards get outlined. Anything FieldLens is unsure about is pushed to Caution or Do-Not-Touch, never waved through.</p>
+      </div>
+
+      <div data-reveal style="animation:flReveal .7s both;animation-timeline:view();animation-range:entry 0% cover 24%;background:#141619;border:1px solid rgba(255,255,255,0.07);border-radius:18px;padding:24px;display:flex;flex-direction:column;">
+        <div style="height:128px;border-radius:12px;border:1px solid rgba(255,255,255,0.07);background:#0e1014;padding:12px;display:flex;flex-direction:column;gap:7px;justify-content:center;">
+          <div style="display:flex;align-items:center;gap:8px;font-size:0.66rem;color:#7b818a;"><span style="width:14px;height:14px;border-radius:4px;background:rgba(76,195,138,0.18);display:inline-flex;align-items:center;justify-content:center;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#4cc38a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4L19 7"></path></svg></span>Power disconnect pulled</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:0.66rem;color:#e6e8eb;background:rgba(63,122,209,0.1);border:1px solid rgba(63,122,209,0.4);border-radius:7px;padding:7px 8px;"><span style="width:8px;height:8px;border-radius:50%;border:2px solid #3f7ad1;"></span>Discharge the capacitor</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:0.66rem;color:#5c626b;"><span style="width:14px;height:14px;border-radius:4px;border:1px solid rgba(255,255,255,0.12);"></span>Inspect contactor</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:9px;margin-top:18px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3f7ad1" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2"></circle><circle cx="6" cy="18" r="2"></circle><path d="M6 8v8M9 6h6a3 3 0 0 1 3 3v0a3 3 0 0 1-3 3H9"></path></svg>
+          <h3 style="font-size:1.12rem;font-weight:600;margin:0;">It guides the inspection</h3>
+        </div>
+        <p style="margin:11px 0 0;font-size:0.95rem;line-height:1.6;color:#a1a6ad;">A step-by-step checklist walks the unit in a safe order, with the plain reason behind each step.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- WORKFLOW CENTERPIECE -->
+<section id="workflow" style="padding:clamp(80px,13vh,170px) 0;border-top:1px solid rgba(255,255,255,0.06);background:linear-gradient(180deg,rgba(63,122,209,0.035),transparent 30%);">
+  <div style="max-width:1160px;margin:0 auto;padding:0 24px;">
+    <div data-reveal style="animation:flReveal .7s both;animation-timeline:view();animation-range:entry 0% cover 24%;text-align:center;max-width:640px;margin:0 auto;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:#6b7178;">One inspection, start to finish</div>
+      <h2 style="font-size:clamp(2rem,4.2vw,3rem);font-weight:600;line-height:1.06;letter-spacing:-0.025em;margin:18px 0 0;">Watch it work.</h2>
+      <p style="font-size:1.1rem;line-height:1.6;color:#a1a6ad;margin:20px auto 0;max-width:50ch;">One outdoor condenser, from camera to completed inspection. No edits, no narration. Follow it at its own pace.</p>
+    </div>
+
+    <div data-reveal style="animation:flReveal .7s both;animation-timeline:view();animation-range:entry 0% cover 24%;max-width:1000px;margin:56px auto 0;">
+
+      <!-- cinematic stage: real product footage + motion graphics -->
+      <div style="position:relative;background:#0a0b0d;border:1px solid rgba(255,255,255,0.1);border-radius:18px;padding:20px;overflow:hidden;box-shadow:0 44px 100px -44px rgba(0,0,0,0.85);">
+        <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.022) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.022) 1px,transparent 1px);background-size:38px 38px;animation:flkGrid 38s linear infinite;pointer-events:none;"></div>
+
+        <div style="position:relative;z-index:2;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;min-height:54px;">
+          <div style="min-height:84px;">
+            <div id="cap1" style="display:block;animation:flkCapIn .6s ease both;">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;letter-spacing:0.14em;color:#6b97d6;">01 / 04</div>
+              <div style="font-size:clamp(1.15rem,2.2vw,1.55rem);font-weight:600;margin-top:6px;letter-spacing:-0.018em;line-height:1.08;">Point at the equipment</div>
+              <div style="height:2px;width:40px;background:#3f7ad1;border-radius:2px;margin-top:9px;transform-origin:left;animation:flkUnderline .55s ease .22s both;"></div>
+              <div style="font-size:0.88rem;color:#a1a6ad;margin-top:9px;line-height:1.45;max-width:44ch;">Open FieldLens in the browser and aim at the unit.</div>
+            </div>
+            <div id="cap2" style="display:none;animation:flkCapIn .6s ease both;">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;letter-spacing:0.14em;color:#6b97d6;">02 / 04</div>
+              <div style="font-size:clamp(1.15rem,2.2vw,1.55rem);font-weight:600;margin-top:6px;letter-spacing:-0.018em;line-height:1.08;">It reads the unit</div>
+              <div style="height:2px;width:40px;background:#3f7ad1;border-radius:2px;margin-top:9px;transform-origin:left;animation:flkUnderline .55s ease .22s both;"></div>
+              <div style="font-size:0.88rem;color:#a1a6ad;margin-top:9px;line-height:1.45;max-width:44ch;">Flags what to assume, and what it cannot verify from a photo.</div>
+            </div>
+            <div id="cap3" style="display:none;animation:flkCapIn .6s ease both;">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;letter-spacing:0.14em;color:#6b97d6;">03 / 04</div>
+              <div style="font-size:clamp(1.15rem,2.2vw,1.55rem);font-weight:600;margin-top:6px;letter-spacing:-0.018em;line-height:1.08;">Guided inspection</div>
+              <div style="height:2px;width:40px;background:#3f7ad1;border-radius:2px;margin-top:9px;transform-origin:left;animation:flkUnderline .55s ease .22s both;"></div>
+              <div style="font-size:0.88rem;color:#a1a6ad;margin-top:9px;line-height:1.45;max-width:44ch;">Walked through the unit, one step at a time.</div>
+            </div>
+            <div id="cap4" style="display:none;animation:flkCapIn .6s ease both;">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;letter-spacing:0.14em;color:#6b97d6;">04 / 04</div>
+              <div style="font-size:clamp(1.15rem,2.2vw,1.55rem);font-weight:600;margin-top:6px;letter-spacing:-0.018em;line-height:1.08;">Inspection complete</div>
+              <div style="height:2px;width:40px;background:#3f7ad1;border-radius:2px;margin-top:9px;transform-origin:left;animation:flkUnderline .55s ease .22s both;"></div>
+              <div style="font-size:0.88rem;color:#a1a6ad;margin-top:9px;line-height:1.45;max-width:44ch;">A clear summary to take to a supervisor.</div>
+            </div>
+          </div>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;letter-spacing:0.12em;color:rgba(255,255,255,0.4);flex:none;padding-top:3px;">FIELDLENS</span>
+        </div>
+
+        <div style="position:relative;z-index:1;margin-top:16px;border-radius:11px;overflow:hidden;border:1px solid rgba(255,255,255,0.1);box-shadow:0 24px 60px -24px rgba(0,0,0,0.8);aspect-ratio:2452 / 1206;background:#000;">
+          <div style="position:absolute;inset:0;animation:flkDrift 16s ease-in-out infinite alternate;">
+            <video id="flVideo" muted loop playsinline preload="auto" style="width:100%;height:100%;object-fit:cover;display:block;transform-origin:center;transition:transform 1.4s cubic-bezier(.45,0,.15,1);transform:scale(1.06);"></video>
+          </div>
+          <div style="position:absolute;inset:0;z-index:2;pointer-events:none;background:radial-gradient(135% 108% at 50% 42%,transparent 52%,rgba(0,0,0,0.5));"></div>
+          <div style="position:absolute;left:0;right:0;height:2px;z-index:2;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(63,122,209,0.4),transparent);animation:flkScanV 7s linear infinite;"></div>
+          <div id="flCallout" style="position:absolute;top:14px;left:14px;z-index:3;display:none;animation:flkCalloutIn .5s ease both;align-items:center;gap:8px;background:rgba(10,11,13,0.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(242,169,59,0.5);border-radius:8px;padding:7px 11px;"><span style="width:7px;height:7px;border-radius:50%;background:#f2a93b;flex:none;"></span><span style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;letter-spacing:0.08em;color:#f2c98a;">VERDICT · ASSUME ENERGIZED</span></div>
+          <button id="flToggle" aria-label="Play or pause" style="position:absolute;left:12px;bottom:12px;z-index:4;width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,0.28);background:rgba(11,12,14,0.55);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;">
+            <svg id="flPauseIcon" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect></svg>
+            <svg id="flPlayIcon" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="display:none;"><path d="M8 5v14l11-7z"></path></svg>
+          </button>
+        </div>
+
+        <div style="position:relative;z-index:2;margin-top:16px;">
+          <div style="height:3px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;"><div id="flProg" style="height:100%;width:0%;background:#3f7ad1;border-radius:2px;transition:width .25s linear;"></div></div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;">
+            <button class="fl-mark" data-scene="1" style="appearance:none;text-align:left;cursor:pointer;font-family:inherit;flex:1 1 120px;min-width:0;border:1px solid rgba(63,122,209,0.55);background:rgba(63,122,209,0.1);border-radius:10px;padding:9px 11px;transition:border-color .35s ease,background .35s ease;"><div style="display:flex;align-items:center;gap:8px;"><span style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:#6b7178;">01</span><span style="font-size:0.84rem;font-weight:600;color:#e6e8eb;white-space:nowrap;">Point</span></div></button>
+            <button class="fl-mark" data-scene="2" style="appearance:none;text-align:left;cursor:pointer;font-family:inherit;flex:1 1 120px;min-width:0;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.015);border-radius:10px;padding:9px 11px;transition:border-color .35s ease,background .35s ease;"><div style="display:flex;align-items:center;gap:8px;"><span style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:#6b7178;">02</span><span style="font-size:0.84rem;font-weight:600;color:#e6e8eb;white-space:nowrap;">Verdict</span></div></button>
+            <button class="fl-mark" data-scene="3" style="appearance:none;text-align:left;cursor:pointer;font-family:inherit;flex:1 1 120px;min-width:0;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.015);border-radius:10px;padding:9px 11px;transition:border-color .35s ease,background .35s ease;"><div style="display:flex;align-items:center;gap:8px;"><span style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:#6b7178;">03</span><span style="font-size:0.84rem;font-weight:600;color:#e6e8eb;white-space:nowrap;">Inspection</span></div></button>
+            <button class="fl-mark" data-scene="4" style="appearance:none;text-align:left;cursor:pointer;font-family:inherit;flex:1 1 120px;min-width:0;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.015);border-radius:10px;padding:9px 11px;transition:border-color .35s ease,background .35s ease;"><div style="display:flex;align-items:center;gap:8px;"><span style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:#6b7178;">04</span><span style="font-size:0.84rem;font-weight:600;color:#e6e8eb;white-space:nowrap;">Complete</span></div></button>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:center;margin-top:30px;">
+        <a class="btn-pri" href="#cta" style="display:inline-flex;align-items:center;gap:8px;background:#3f7ad1;color:#fff;padding:13px 24px;border-radius:10px;font-size:0.98rem;font-weight:600;transition:background .2s,transform .2s;">Try the live demo
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+        </a>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- SAFETY -->
-  <section id="safety">
-    <div class="wrap">
-      <div class="safety">
-        <span class="eyebrow">Safety</span>
-        <h2 style="font-size:clamp(23px,3vw,31px)">Safety is the product, not a feature.</h2>
-        <p class="mut" style="max-width:var(--measure);margin-top:14px">FieldLens is built for someone standing next to lethal voltage on their first week. When it is not certain, it chooses the more cautious verdict. It never tells a new tech to touch, loosen, or probe anything without confirmed lockout, tagout, and zero voltage verification. Every verdict carries a label and an icon, not color alone.</p>
-        <div class="legend" role="list">
-          <span class="lvl safe" role="listitem"><svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg> Safe to inspect</span>
-          <span class="lvl caution" role="listitem"><svg viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg> Caution required</span>
-          <span class="lvl danger" role="listitem"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg> Do not touch</span>
+<!-- EVIDENCE -->
+<section id="evidence" style="padding:clamp(72px,11vh,140px) 0;border-top:1px solid rgba(255,255,255,0.06);">
+  <div style="max-width:1160px;margin:0 auto;padding:0 24px;">
+    <div data-reveal style="animation:flReveal .7s both;animation-timeline:view();animation-range:entry 0% cover 24%;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:#6b7178;">Evidence</div>
+      <h2 style="font-size:clamp(1.9rem,3.8vw,2.8rem);font-weight:600;line-height:1.08;letter-spacing:-0.02em;margin:18px 0 0;max-width:18ch;">What we can honestly show.</h2>
+      <p style="font-size:1.08rem;line-height:1.65;color:#a1a6ad;max-width:62ch;margin:20px 0 0;">These are results from our own internal test set, not the field. We are pre-revenue and in open beta. We would rather show you a small honest number than a big invented one.</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-top:48px;">
+      <div data-reveal style="animation:flReveal .7s both;animation-timeline:view();animation-range:entry 0% cover 24%;grid-column:1 / -1;background:linear-gradient(180deg,rgba(63,122,209,0.08),transparent);border:1px solid rgba(63,122,209,0.3);border-radius:18px;padding:30px;display:flex;flex-wrap:wrap;align-items:center;gap:24px;justify-content:space-between;">
+        <div style="max-width:46ch;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.66rem;letter-spacing:0.1em;color:#6b97d6;">PRIMARY RESULT · INTERNAL TEST SET</div>
+          <div style="font-size:clamp(1.6rem,3vw,2.2rem);font-weight:600;letter-spacing:-0.02em;margin-top:12px;line-height:1.1;">Not one visibly hazardous part was marked safe.</div>
+          <p style="font-size:0.96rem;line-height:1.6;color:#a1a6ad;margin:14px 0 0;">Across the hazardous components in our test set, FieldLens flagged every one as Caution or Do-Not-Touch. That conservative behavior is the result we care about most.</p>
         </div>
+        <div style="font-size:clamp(3.4rem,7vw,5rem);font-weight:600;letter-spacing:-0.04em;color:#3f7ad1;line-height:0.9;">0<span style="font-size:0.34em;color:#a1a6ad;font-weight:500;letter-spacing:0;"> missed</span></div>
+      </div>
+
+      <div data-reveal style="animation:flReveal .7s both;animation-timeline:view();animation-range:entry 0% cover 24%;background:#141619;border:1px solid rgba(255,255,255,0.07);border-radius:18px;padding:26px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.66rem;letter-spacing:0.1em;color:#6b7178;">COMPONENT IDENTIFICATION</div>
+        <div style="margin-top:16px;border:1px dashed rgba(255,255,255,0.16);border-radius:12px;padding:18px;text-align:center;color:#7b818a;font-family:'JetBrains Mono',monospace;font-size:0.66rem;line-height:1.6;letter-spacing:0.04em;background:repeating-linear-gradient(46deg,rgba(255,255,255,0.012) 0 8px,transparent 8px 16px);">PLACEHOLDER<br>[ accuracy on internal test set ]</div>
+        <p style="font-size:0.92rem;line-height:1.55;color:#a1a6ad;margin:16px 0 0;">How often it names the right component, on the residential units we have tested so far.</p>
+      </div>
+
+      <div data-reveal style="animation:flReveal .7s both;animation-timeline:view();animation-range:entry 0% cover 24%;background:#141619;border:1px solid rgba(255,255,255,0.07);border-radius:18px;padding:26px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.66rem;letter-spacing:0.1em;color:#6b7178;">SPEED ON DEVICE</div>
+        <div style="margin-top:16px;border:1px dashed rgba(255,255,255,0.16);border-radius:12px;padding:18px;text-align:center;color:#7b818a;font-family:'JetBrains Mono',monospace;font-size:0.66rem;line-height:1.6;letter-spacing:0.04em;background:repeating-linear-gradient(46deg,rgba(255,255,255,0.012) 0 8px,transparent 8px 16px);">PLACEHOLDER<br>[ time to first flag, mid-range phone ]</div>
+        <p style="font-size:0.92rem;line-height:1.55;color:#a1a6ad;margin:16px 0 0;">How long from pointing the camera to the first hazard flag, in a phone browser.</p>
       </div>
     </div>
-  </section>
 
-  <!-- EVIDENCE -->
-  <section id="evidence">
-    <div class="wrap">
-      <div class="sec-head">
-        <span class="eyebrow">Evidence, not traction</span>
-        <h2>We measure what we build.</h2>
-        <p class="mut">This is product evidence from an internal benchmark, not market traction. It is an honest read on how the model performs today, including where it falls short.</p>
-      </div>
-      <div class="grid g3">
-        <div class="card">
-          <div class="stat safe">0 of 8</div>
-          <h3>hazards called safe</h3>
-          <p>Across eight visibly dangerous or live exposed parts (blown caps, burnt contactors, open panels), FieldLens marked zero as safe to inspect.</p>
-        </div>
-        <div class="card">
-          <div class="stat">80%</div>
-          <h3>component ID accuracy</h3>
-          <p>24 of 30 images, strict exact match across 15 component types. Close synonyms count as misses, so real recognition runs higher.</p>
-        </div>
-        <div class="card">
-          <div class="stat">~6s</div>
-          <h3>photo to full drill</h3>
-          <p>Median end to end. A fast safety verdict shows first, in about a second, while the full walkthrough loads.</p>
-        </div>
-      </div>
-      <p class="source">Measured on a 30 image set through the live app, repeated across runs (30 of 30, no errors each time, and the 0 of 8 hazard result held every run). Honest caveats. These are web sourced images, cleaner than a phone in a dark mechanical room, so treat them as an upper bound, not field performance. ID is scored on strict exact match. The model reserves Do Not Touch for genuinely hazardous gear and will call low voltage parts safe, which we are tightening for live panels and boards. Next, benchmarking on real field photos with design partner techs.</p>
+    <div data-reveal style="animation:flReveal .7s both;animation-timeline:view();animation-range:entry 0% cover 24%;margin-top:26px;display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:16px 22px;">
+      <span style="width:7px;height:7px;border-radius:50%;background:#3f7ad1;flex:none;"></span>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;letter-spacing:0.06em;color:#6b97d6;white-space:nowrap;">OPEN BETA · PRE-REVENUE · DESIGN PARTNERS WELCOME</div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- DEFENSIBILITY -->
-  <section id="moat">
-    <div class="wrap">
-      <div class="sec-head">
-        <span class="eyebrow">Defensibility</span>
-        <h2>Why this is hard to copy.</h2>
-        <p class="mut">A chatbot that names a part is a weekend project. The compounding parts are ours.</p>
-      </div>
-      <div class="grid g2">
-        <div class="card">
-          <div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></div>
-          <h3>Per step look here highlighting</h3>
-          <p>FieldLens does not just describe a step. It anchors a box onto the exact spot in the tech's own photo, colored by hazard (red, amber, green) so the danger reads directly on the equipment. Spatial, in image guidance a generic chat answer cannot reproduce.</p>
-        </div>
-        <div class="card">
-          <div class="ic"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg></div>
-          <h3>A field data flywheel</h3>
-          <p>Every scan auto labels a real component in real field conditions. That proprietary dataset trains a custom, on device model that is faster, offline capable, and a moat rivals cannot shortcut by calling the same public API.</p>
-        </div>
+<!-- SAFETY -->
+<section id="safety" style="padding:clamp(72px,11vh,140px) 0;border-top:1px solid rgba(255,255,255,0.06);">
+  <div style="max-width:1160px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:clamp(36px,5vw,64px);align-items:start;">
+    <div data-reveal style="animation:flReveal .7s both;animation-timeline:view();animation-range:entry 0% cover 24%;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:#6b7178;">Safety</div>
+      <h2 style="font-size:clamp(1.9rem,3.8vw,2.8rem);font-weight:600;line-height:1.08;letter-spacing:-0.02em;margin:18px 0 0;max-width:16ch;">Safety is the product, not a feature.</h2>
+      <p style="font-size:1.08rem;line-height:1.65;color:#a1a6ad;max-width:54ch;margin:20px 0 0;">FieldLens is tuned to err toward caution. When the model is unsure, it does not guess in the technician's favor. It pushes the case to Caution or Do-Not-Touch and tells them why. A false alarm costs a few seconds. A missed hazard does not.</p>
+      <div style="margin-top:26px;border:1px solid rgba(63,122,209,0.3);background:rgba(63,122,209,0.06);border-radius:14px;padding:20px;display:flex;gap:13px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3f7ad1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px;"><path d="M12 3l7 3v5c0 4.4-3 7.4-7 9-4-1.6-7-4.6-7-9V6l7-3z"></path><path d="M9 12l2 2 4-4"></path></svg>
+        <p style="margin:0;font-size:0.95rem;line-height:1.6;color:#cdd2d8;">FieldLens is a training and inspection aid. It does not replace a qualified supervisor. Always verify with a licensed professional before working on live equipment.</p>
       </div>
     </div>
-  </section>
 
-  <!-- WHY NOW -->
-  <section id="why">
-    <div class="wrap">
-      <div class="grid g2" style="align-items:center;gap:40px">
-        <div>
-          <span class="eyebrow">Why now</span>
-          <h2 style="font-size:clamp(23px,3vw,31px)">The timing just arrived.</h2>
-          <p class="mut" style="margin-top:14px;max-width:var(--measure)">Phone grade AI vision only recently became good and cheap enough to identify equipment and reason about safety in seconds, on the device a tech already carries. At the same time the skilled trades labor gap keeps widening. The tool and the need met this year.</p>
+    <div data-reveal style="animation:flReveal .7s both;animation-timeline:view();animation-range:entry 0% cover 24%;background:#141619;border:1px solid rgba(255,255,255,0.07);border-radius:18px;padding:26px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.66rem;letter-spacing:0.1em;color:#6b7178;margin-bottom:18px;">STATUS LEGEND</div>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div style="display:flex;gap:13px;align-items:flex-start;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,0.06);">
+          <span style="width:12px;height:12px;border-radius:50%;background:#e5484d;flex:none;margin-top:4px;box-shadow:0 0 0 4px rgba(229,72,77,0.14);"></span>
+          <div><div style="font-weight:600;font-size:0.98rem;">Do-Not-Touch</div><p style="margin:4px 0 0;font-size:0.9rem;line-height:1.5;color:#a1a6ad;">A visible hazard, or too uncertain to clear. Stop and get a second opinion.</p></div>
         </div>
-        <div class="card">
-          <h3 style="margin-bottom:14px">The market</h3>
-          <ul class="clean">
-            <li><svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg><span><b>$158B</b> U.S. HVAC contractor market in 2025.</span></li>
-            <li><svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg><span><b>110k to 225k</b> technician shortage, projected to more than double within five years.</span></li>
-            <li><svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg><span><b>~25,000</b> techs leave the trade every year. Chronic turnover.</span></li>
-            <li><svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg><span><b>$15k to $25k</b> to replace one technician. Our ROI wedge.</span></li>
-          </ul>
-          <p class="source">Sources. IBISWorld, ServiceTitan, and industry turnover estimates.</p>
+        <div style="display:flex;gap:13px;align-items:flex-start;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,0.06);">
+          <span style="width:12px;height:12px;border-radius:50%;background:#f2a93b;flex:none;margin-top:4px;box-shadow:0 0 0 4px rgba(242,169,59,0.14);"></span>
+          <div><div style="font-weight:600;font-size:0.98rem;">Caution</div><p style="margin:4px 0 0;font-size:0.9rem;line-height:1.5;color:#a1a6ad;">Worth a closer look or an extra step before proceeding.</p></div>
         </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ROADMAP -->
-  <section id="roadmap">
-    <div class="wrap">
-      <div class="sec-head">
-        <span class="eyebrow">Roadmap</span>
-        <h2>Where this goes.</h2>
-      </div>
-      <div class="grid g2">
-        <ul class="clean">
-          <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span>Broaden coverage across more components and equipment types.</span></li>
-          <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span>Training progress tracking. What a tech has practiced and mastered.</span></li>
-          <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span>Offline and low signal mode for mechanical rooms and basements.</span></li>
-        </ul>
-        <ul class="clean">
-          <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span>Pilots with trade schools and HVAC employers.</span></li>
-          <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span>On device model trained on the field data flywheel.</span></li>
-          <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span>Long term, registered augmented reality overlays and AR glasses, once the phone product is proven. Today the product is computer vision on a phone, not AR.</span></li>
-        </ul>
-      </div>
-    </div>
-  </section>
-
-  <!-- FOUNDER -->
-  <section id="team">
-    <div class="wrap">
-      <div class="sec-head">
-        <span class="eyebrow">Founder</span>
-        <h2>Why us.</h2>
-        <p class="mut">A founder with real computer vision and ML research depth, which is the hard part of building this.</p>
-      </div>
-      <div class="card person">
-        <div class="avatar" aria-hidden="true">A</div>
-        <div>
-          <h3>Avilash Angirekula <span class="mut" style="font-size:13.5px;font-weight:500">· Founder</span></h3>
-          <p class="mut" style="margin-top:8px;max-width:var(--measure)">Built the FieldLens MVP end to end. Computer vision segmentation research in the Cedars-Sinai and Dartmouth labs, where the work was teaching models to find and outline the right region in an image, the same core problem behind drawing a safe box on a component. Also shipped a real time hand tracking demo seen by 4,500 people, which is where the eye for fast, on device perception comes from.</p>
-          <a class="link" href="https://www.linkedin.com/in/avilash-angirekula-b7665a301/" target="_blank" rel="noopener">
-            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M6.94 5a2 2 0 1 1-4 0 2 2 0 0 1 4 0ZM3 8.98h3.9V21H3Zm6.5 0h3.7v1.64h.05c.52-.92 1.78-1.9 3.66-1.9 3.92 0 4.64 2.45 4.64 5.63V21h-3.9v-5.3c0-1.26-.02-2.9-1.77-2.9-1.77 0-2.04 1.38-2.04 2.8V21H9.5Z"/></svg>
-            LinkedIn
-          </a>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- FAQ -->
-  <section id="faq">
-    <div class="wrap">
-      <div class="sec-head">
-        <span class="eyebrow">FAQ</span>
-        <h2>Honest answers.</h2>
-      </div>
-      <div class="faq">
-        <details>
-          <summary>Do I need to install an app? <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
-          <p class="ans">No. FieldLens runs in any phone browser. You open a link, point your phone, and go. There is nothing to download and no account required to try it.</p>
-        </details>
-        <details>
-          <summary>Is this augmented reality? <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
-          <p class="ans">No. Today FieldLens is computer vision applied to a phone photo. It identifies the component and draws a box on it. Registered AR overlays and AR glasses are a long term roadmap item, not the product you use now.</p>
-        </details>
-        <details>
-          <summary>How accurate is it? <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
-          <p class="ans">On our internal 30 image benchmark, component identification was 80 percent on strict exact match, and zero of eight clearly hazardous parts were ever called safe. That is product evidence on clean web sourced images, not field validated performance yet. Real field photos are the next benchmark.</p>
-        </details>
-        <details>
-          <summary>What equipment does it cover? <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
-          <p class="ans">It targets common HVAC and electrical components a first year tech meets, such as capacitors, contactors, and panels. Coverage is expanding. Broader equipment support is on the roadmap.</p>
-        </details>
-        <details>
-          <summary>Does it work offline? <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
-          <p class="ans">Not yet. It currently needs a connection. An offline and low signal mode for mechanical rooms and basements is on the roadmap, alongside an on device model.</p>
-        </details>
-        <details>
-          <summary>What does it cost? <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
-          <p class="ans">It is free during the open beta. We are pre revenue and focused on getting it right with design partner technicians and shops before pricing anything.</p>
-        </details>
-        <details>
-          <summary>Who built it, and how do I get involved? <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
-          <p class="ans">A solo founder with a computer vision and ML research background. If you run a shop or train techs, design partners are welcome. Reach out and we will set you up and learn from how your team actually uses it.</p>
-        </details>
-      </div>
-    </div>
-  </section>
-
-  <!-- FINAL CTA -->
-  <section id="contact">
-    <div class="wrap">
-      <div class="final">
-        <span class="eyebrow" style="text-align:center">Design partners welcome</span>
-        <h2>Pilot FieldLens with your techs.</h2>
-        <p>It is live and free during the open beta. Try it on your phone in thirty seconds, or get in touch to become a design partner.</p>
-        <div class="cta-row">
-          <a class="btn btn-primary" href="/" target="_blank" rel="noopener">
-            Try the live demo
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-          </a>
-          <a class="btn btn-ghost" href="mailto:avilasha153@gmail.com">Become a design partner</a>
+        <div style="display:flex;gap:13px;align-items:flex-start;">
+          <span style="width:12px;height:12px;border-radius:50%;background:#4cc38a;flex:none;margin-top:4px;box-shadow:0 0 0 4px rgba(76,195,138,0.14);"></span>
+          <div><div style="font-weight:600;font-size:0.98rem;">Safe</div><p style="margin:4px 0 0;font-size:0.9rem;line-height:1.5;color:#a1a6ad;">Nothing visible to flag on this part. Only ever shown when there is real confidence.</p></div>
         </div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-</main>
+<!-- WHY HARD TO COPY -->
+<section style="padding:clamp(72px,11vh,140px) 0;border-top:1px solid rgba(255,255,255,0.06);">
+  <div style="max-width:1160px;margin:0 auto;padding:0 24px;">
+    <div data-reveal style="animation:flReveal .7s both;animation-timeline:view();animation-range:entry 0% cover 24%;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:#6b7178;">Why this is hard to copy</div>
+      <h2 style="font-size:clamp(1.9rem,3.8vw,2.8rem);font-weight:600;line-height:1.08;letter-spacing:-0.02em;margin:18px 0 0;max-width:16ch;">The hard parts.</h2>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;margin-top:44px;">
+      <div data-reveal style="animation:flReveal .7s both;animation-timeline:view();animation-range:entry 0% cover 24%;background:#141619;border:1px solid rgba(255,255,255,0.07);border-radius:18px;padding:28px;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3f7ad1" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+        <h3 style="font-size:1.18rem;font-weight:600;margin:18px 0 0;">Guidance anchored to the real photo</h3>
+        <p style="margin:12px 0 0;font-size:0.98rem;line-height:1.6;color:#a1a6ad;">Each step highlights the exact spot on the technician's own photo, not a generic diagram. Lining guidance up with a live, messy frame in the field is the part that does not come for free.</p>
+      </div>
+      <div data-reveal style="animation:flReveal .7s both;animation-timeline:view();animation-range:entry 0% cover 24%;background:#141619;border:1px solid rgba(255,255,255,0.07);border-radius:18px;padding:28px;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3f7ad1" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5z"></path><path d="M3 13l9 5 9-5"></path></svg>
+        <h3 style="font-size:1.18rem;font-weight:600;margin:18px 0 0;">A field-data flywheel</h3>
+        <p style="margin:12px 0 0;font-size:0.98rem;line-height:1.6;color:#a1a6ad;">Real use auto-labels real components over time. Every inspection in the field makes the next identification a little sharper, on the exact equipment techs actually meet.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ROADMAP -->
+<section id="roadmap" style="padding:clamp(72px,11vh,140px) 0;border-top:1px solid rgba(255,255,255,0.06);">
+  <div style="max-width:1160px;margin:0 auto;padding:0 24px;">
+    <div data-reveal style="animation:flReveal .7s both;animation-timeline:view();animation-range:entry 0% cover 24%;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:#6b7178;">Roadmap</div>
+      <h2 style="font-size:clamp(1.9rem,3.8vw,2.8rem);font-weight:600;line-height:1.08;letter-spacing:-0.02em;margin:18px 0 0;max-width:14ch;">Where this goes.</h2>
+    </div>
+    <div style="margin-top:44px;display:flex;flex-direction:column;gap:0;">
+      <div data-reveal style="animation:flReveal .7s both;animation-timeline:view();animation-range:entry 0% cover 24%;display:grid;grid-template-columns:130px 1fr;gap:24px;padding:24px 0;border-top:1px solid rgba(255,255,255,0.07);">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.74rem;letter-spacing:0.08em;color:#3f7ad1;display:flex;align-items:flex-start;gap:8px;"><span style="width:8px;height:8px;border-radius:50%;background:#3f7ad1;margin-top:5px;"></span>NOW</div>
+        <div><h3 style="font-size:1.18rem;font-weight:600;margin:0;">Phone-first, in the browser</h3><p style="margin:8px 0 0;font-size:0.98rem;line-height:1.6;color:#a1a6ad;max-width:56ch;">Residential HVAC, on the phone the technician already carries. Computer vision, no install, no headset.</p></div>
+      </div>
+      <div data-reveal style="animation:flReveal .7s both;animation-timeline:view();animation-range:entry 0% cover 24%;display:grid;grid-template-columns:130px 1fr;gap:24px;padding:24px 0;border-top:1px solid rgba(255,255,255,0.07);">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.74rem;letter-spacing:0.08em;color:#a1a6ad;display:flex;align-items:flex-start;gap:8px;"><span style="width:8px;height:8px;border-radius:50%;border:2px solid #6b7178;margin-top:5px;"></span>NEXT</div>
+        <div><h3 style="font-size:1.18rem;font-weight:600;margin:0;">Broader equipment coverage</h3><p style="margin:8px 0 0;font-size:0.98rem;line-height:1.6;color:#a1a6ad;max-width:56ch;">Commercial units and electrical panels, more component types, deeper inspection flows as the field data grows.</p></div>
+      </div>
+      <div data-reveal style="animation:flReveal .7s both;animation-timeline:view();animation-range:entry 0% cover 24%;display:grid;grid-template-columns:130px 1fr;gap:24px;padding:24px 0;border-top:1px solid rgba(255,255,255,0.07);border-bottom:1px solid rgba(255,255,255,0.07);">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.74rem;letter-spacing:0.08em;color:#6b7178;display:flex;align-items:flex-start;gap:8px;"><span style="width:8px;height:8px;border-radius:50%;border:2px solid #4c525b;margin-top:5px;"></span>LONG-TERM</div>
+        <div><div style="display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,0.12);border-radius:999px;padding:3px 10px;font-family:'JetBrains Mono',monospace;font-size:0.6rem;letter-spacing:0.08em;color:#6b7178;margin-bottom:12px;">FUTURE, NOT TODAY</div><h3 style="font-size:1.18rem;font-weight:600;margin:0;">Real-time AR overlays</h3><p style="margin:8px 0 0;font-size:0.98rem;line-height:1.6;color:#a1a6ad;max-width:56ch;">Eventually, hands-free AR glasses that draw guidance straight onto the unit. This is the long-term vision and the only place AR appears. Today FieldLens is computer vision in a phone browser.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TEAM -->
+<section style="padding:clamp(72px,11vh,140px) 0;border-top:1px solid rgba(255,255,255,0.06);">
+  <div style="max-width:1160px;margin:0 auto;padding:0 24px;">
+    <div data-reveal style="animation:flReveal .7s both;animation-timeline:view();animation-range:entry 0% cover 24%;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:#6b7178;">Team</div>
+      <h2 style="font-size:clamp(1.9rem,3.8vw,2.8rem);font-weight:600;line-height:1.08;letter-spacing:-0.02em;margin:18px 0 0;max-width:16ch;">Who is building this.</h2>
+    </div>
+    <div data-reveal style="animation:flReveal .7s both;animation-timeline:view();animation-range:entry 0% cover 24%;margin-top:40px;background:#141619;border:1px solid rgba(255,255,255,0.07);border-radius:18px;padding:clamp(24px,4vw,36px);display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:32px;align-items:center;">
+      <div>
+        <div style="font-size:1.4rem;font-weight:600;letter-spacing:-0.01em;">Avilash Angirekula</div>
+        <div style="font-size:0.95rem;color:#6b97d6;margin-top:5px;">Founder · Computer vision and ML</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:#6b7178;letter-spacing:0.06em;margin-top:10px;">SOLO · LOOKING FOR A CO-FOUNDER</div>
+      </div>
+      <div>
+        <p style="font-size:1rem;line-height:1.65;color:#cdd2d8;margin:0;">Computer-vision and machine-learning research, including medical-imaging segmentation work in a university lab. FieldLens grew out of that research, redirected from the lab to the field. A high-school founder building for technicians, not for a science fair.</p>
+        <p style="font-size:0.95rem;line-height:1.6;color:#a1a6ad;margin:14px 0 0;">Currently solo, and looking for a co-founder who has turned a wrench and knows what a bad day on a rooftop unit actually looks like.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section style="padding:clamp(72px,11vh,140px) 0;border-top:1px solid rgba(255,255,255,0.06);">
+  <div style="max-width:820px;margin:0 auto;padding:0 24px;">
+    <div data-reveal style="animation:flReveal .7s both;animation-timeline:view();animation-range:entry 0% cover 24%;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;letter-spacing:0.14em;text-transform:uppercase;color:#6b7178;">FAQ</div>
+      <h2 style="font-size:clamp(1.9rem,3.8vw,2.8rem);font-weight:600;line-height:1.08;letter-spacing:-0.02em;margin:18px 0 0;">Straight answers.</h2>
+    </div>
+    <div data-reveal style="animation:flReveal .7s both;animation-timeline:view();animation-range:entry 0% cover 24%;margin-top:36px;">
+      <details style="border-top:1px solid rgba(255,255,255,0.08);">
+        <summary style="cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 0;font-size:1.08rem;font-weight:500;">Does FieldLens replace a supervisor?<span style="color:#3f7ad1;font-size:1.4rem;line-height:1;flex:none;">+</span></summary>
+        <p style="margin:0 0 22px;font-size:0.98rem;line-height:1.65;color:#a1a6ad;max-width:64ch;">No, and it never should. It is a second set of eyes that flags visible hazards and walks through a safe order of work. The qualified supervisor still owns every decision. FieldLens just makes sure fewer things get missed before they get there.</p>
+      </details>
+      <details style="border-top:1px solid rgba(255,255,255,0.08);">
+        <summary style="cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 0;font-size:1.08rem;font-weight:500;">What does it run on?<span style="color:#3f7ad1;font-size:1.4rem;line-height:1;flex:none;">+</span></summary>
+        <p style="margin:0 0 22px;font-size:0.98rem;line-height:1.65;color:#a1a6ad;max-width:64ch;">Any modern phone browser. There is no app to download and no headset to wear. A technician opens a link and points the camera. That is the whole setup.</p>
+      </details>
+      <details style="border-top:1px solid rgba(255,255,255,0.08);">
+        <summary style="cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 0;font-size:1.08rem;font-weight:500;">How accurate is it?<span style="color:#3f7ad1;font-size:1.4rem;line-height:1;flex:none;">+</span></summary>
+        <p style="margin:0 0 22px;font-size:0.98rem;line-height:1.65;color:#a1a6ad;max-width:64ch;">Honestly, early. Our numbers come from a small internal test set, not the field. The result we trust most is that it has not marked a visibly hazardous part safe in that set. We are tuning it to stay conservative as we test on more real units.</p>
+      </details>
+      <details style="border-top:1px solid rgba(255,255,255,0.08);">
+        <summary style="cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 0;font-size:1.08rem;font-weight:500;">Is it available now?<span style="color:#3f7ad1;font-size:1.4rem;line-height:1;flex:none;">+</span></summary>
+        <p style="margin:0 0 22px;font-size:0.98rem;line-height:1.65;color:#a1a6ad;max-width:64ch;">It is an early but working prototype, in open beta and pre-revenue. We are recruiting design-partner shops and technicians to test it in the field. If that is you, we want to talk.</p>
+      </details>
+      <details style="border-top:1px solid rgba(255,255,255,0.08);">
+        <summary style="cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 0;font-size:1.08rem;font-weight:500;">Who is it for?<span style="color:#3f7ad1;font-size:1.4rem;line-height:1;flex:none;">+</span></summary>
+        <p style="margin:0 0 22px;font-size:0.98rem;line-height:1.65;color:#a1a6ad;max-width:64ch;">New HVAC technicians, and the shops training them. It is built for the person on day thirty who is alone at a unit, not for a classroom. The framing is safety and ramp-up, not certification.</p>
+      </details>
+      <details style="border-top:1px solid rgba(255,255,255,0.08);border-bottom:1px solid rgba(255,255,255,0.08);">
+        <summary style="cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 0;font-size:1.08rem;font-weight:500;">Is this AR?<span style="color:#3f7ad1;font-size:1.4rem;line-height:1;flex:none;">+</span></summary>
+        <p style="margin:0 0 22px;font-size:0.98rem;line-height:1.65;color:#a1a6ad;max-width:64ch;">No. Today FieldLens is computer vision running in a phone browser. Real-time AR overlays and hands-free glasses are a long-term roadmap idea, not the product you would use this week.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section id="cta" style="padding:clamp(80px,13vh,160px) 0;border-top:1px solid rgba(255,255,255,0.06);background:linear-gradient(180deg,transparent,rgba(63,122,209,0.05));">
+  <div style="max-width:760px;margin:0 auto;padding:0 24px;text-align:center;">
+    <div data-reveal style="animation:flReveal .7s both;animation-timeline:view();animation-range:entry 0% cover 24%;">
+      <h2 style="font-size:clamp(2rem,4.4vw,3.1rem);font-weight:600;line-height:1.05;letter-spacing:-0.025em;margin:0;">Try it, then tell us where it breaks.</h2>
+      <p style="font-size:1.08rem;line-height:1.65;color:#a1a6ad;max-width:58ch;margin:22px auto 0;">FieldLens is an early product we are testing with technicians right now. We cold-emailed a lot of HVAC shops and mostly got ignored, so we started calling during the slow afternoon hours and talking to whoever picked up. If you turn a wrench, or you run a shop, we want to hear what you see in the field.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:center;margin:34px 0 0;">
+        <a class="btn-pri" href="#workflow" style="display:inline-flex;align-items:center;gap:8px;background:#3f7ad1;color:#fff;padding:14px 26px;border-radius:11px;font-size:1rem;font-weight:600;transition:background .2s,transform .2s;">Try the live demo
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+        </a>
+        <a class="lnk-soft" href="mailto:hello@fieldlens.example" style="display:inline-flex;align-items:center;gap:8px;color:#cdd2d8;padding:14px 18px;font-size:1rem;font-weight:500;transition:color .2s;">or email the founder</a>
+      </div>
+      <div style="margin-top:24px;font-family:'JetBrains Mono',monospace;font-size:0.66rem;letter-spacing:0.06em;color:#6b7178;">DESIGN PARTNERS AND EARLY FEEDBACK WELCOME · PRE-REVENUE · NO CONTRACTS</div>
+    </div>
+  </div>
+</section>
 
 <!-- FOOTER -->
-<footer>
-  <div class="wrap">
-    <div class="foot-grid">
-      <div class="foot-col foot-brand">
-        <a class="logo" href="#top" aria-label="FieldLens home">
-          <span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></span>
-          FieldLens
-        </a>
-        <p>AI safety and inspection coaching for new HVAC technicians. Open beta, built by a computer vision and ML researcher.</p>
-      </div>
-      <div class="foot-col">
-        <h4>Product</h4>
-        <a href="#how">How it works</a>
-        <a href="#action">In action</a>
-        <a href="#evidence">Evidence</a>
-        <a href="#safety">Safety</a>
-        <a href="/" target="_blank" rel="noopener">Try the live demo</a>
-      </div>
-      <div class="foot-col">
-        <h4>Company</h4>
-        <a href="#problem">Problem</a>
-        <a href="#why">Why now</a>
-        <a href="#roadmap">Roadmap</a>
-        <a href="#team">Founder</a>
-        <a href="mailto:avilasha153@gmail.com">Contact</a>
-      </div>
-      <div class="foot-col">
-        <h4>Legal</h4>
-        <!-- TODO: replace # with real Privacy and Terms pages before any paid or partner launch. -->
-        <a href="#" aria-disabled="true">Privacy (coming soon)</a>
-        <a href="#" aria-disabled="true">Terms (coming soon)</a>
+<footer style="border-top:1px solid rgba(255,255,255,0.06);padding:56px 0 40px;">
+  <div style="max-width:1160px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:36px;">
+    <div style="grid-column:span 1;min-width:200px;">
+      <a href="#top" style="display:flex;align-items:center;gap:9px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="#3f7ad1" stroke-width="1.8"></circle><circle cx="12" cy="12" r="3" fill="#3f7ad1"></circle></svg><span style="font-weight:600;font-size:1rem;">FieldLens</span></a>
+      <p style="margin:14px 0 0;font-size:0.86rem;line-height:1.6;color:#6b7178;max-width:32ch;">Computer vision that helps new HVAC technicians work more safely, in any phone browser.</p>
+    </div>
+    <div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;color:#5c626b;text-transform:uppercase;">Product</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;">
+        <a class="lnk" href="#how" style="font-size:0.9rem;color:#a1a6ad;white-space:nowrap;transition:color .2s;">How it works</a>
+        <a class="lnk" href="#workflow" style="font-size:0.9rem;color:#a1a6ad;white-space:nowrap;transition:color .2s;">Live demo</a>
+        <a class="lnk" href="#evidence" style="font-size:0.9rem;color:#a1a6ad;white-space:nowrap;transition:color .2s;">Evidence</a>
+        <a class="lnk" href="#roadmap" style="font-size:0.9rem;color:#a1a6ad;white-space:nowrap;transition:color .2s;">Roadmap</a>
       </div>
     </div>
-    <div class="foot-bottom">
-      <span>© <span id="yr"></span> FieldLens</span>
-      <a href="mailto:avilasha153@gmail.com">avilasha153@gmail.com</a>
+    <div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;color:#5c626b;text-transform:uppercase;">Company</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;">
+        <a class="lnk" href="#cta" style="font-size:0.9rem;color:#a1a6ad;white-space:nowrap;transition:color .2s;">Contact</a>
+        <a class="lnk" href="#safety" style="font-size:0.9rem;color:#a1a6ad;white-space:nowrap;transition:color .2s;">Safety</a>
+        <a class="lnk" href="mailto:hello@fieldlens.example" style="font-size:0.9rem;color:#a1a6ad;white-space:nowrap;transition:color .2s;">Design partners</a>
+      </div>
     </div>
+    <div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;color:#5c626b;text-transform:uppercase;">Legal</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;">
+        <a class="lnk" href="#" style="font-size:0.9rem;color:#a1a6ad;white-space:nowrap;transition:color .2s;">Privacy</a>
+        <a class="lnk" href="#" style="font-size:0.9rem;color:#a1a6ad;white-space:nowrap;transition:color .2s;">Terms</a>
+      </div>
+    </div>
+  </div>
+  <div style="max-width:1160px;margin:36px auto 0;padding:24px 24px 0;border-top:1px solid rgba(255,255,255,0.06);display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between;align-items:center;">
+    <p style="margin:0;font-size:0.8rem;line-height:1.6;color:#5c626b;max-width:62ch;">FieldLens is an educational and inspection aid in open beta. It does not replace a qualified supervisor or a licensed professional. Always verify before working on live equipment.</p>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;letter-spacing:0.06em;color:#4c525b;">© 2026 FIELDLENS</div>
   </div>
 </footer>
 
 <script>
-  document.getElementById('yr').textContent = new Date().getFullYear();
-  document.querySelectorAll('#nl a').forEach(function(a){
-    a.addEventListener('click', function(){
-      var n=document.getElementById('nl'); n.classList.remove('open');
-      var t=document.querySelector('.navtoggle');
-      if(t){t.setAttribute('aria-expanded','false');t.setAttribute('aria-label','Open menu');}
+(function () {
+  /* ---- mobile nav ---- */
+  var burger = document.getElementById('navBurger');
+  var menu = document.getElementById('navMenu');
+  if (burger && menu) {
+    burger.addEventListener('click', function () {
+      menu.style.display = (menu.style.display === 'flex') ? 'none' : 'flex';
+    });
+    menu.querySelectorAll('a').forEach(function (a) {
+      a.addEventListener('click', function () { menu.style.display = 'none'; });
+    });
+  }
+
+  /* ---- "Watch it work" demo controller ---- */
+  // The clip is a screen recording of the FieldLens web app. Each of the four
+  // scenes maps to a timestamp in the video; the caption, progress bar, active
+  // marker and the zoom-to-action transform all follow the playhead.
+  var VIDEO_SRC = 'uploads/demo.mp4';   // <-- place the demo clip here
+  var MARKS = [0, 3.6, 9.8, 17.8];      // scene start times (seconds)
+  var STORE_KEY = 'fl_demo_t';          // remembers playback position across reloads
+
+  var video    = document.getElementById('flVideo');
+  var prog     = document.getElementById('flProg');
+  var callout  = document.getElementById('flCallout');
+  var toggle   = document.getElementById('flToggle');
+  var playIcon = document.getElementById('flPlayIcon');
+  var pauseIcon= document.getElementById('flPauseIcon');
+  var caps     = [1, 2, 3, 4].map(function (n) { return document.getElementById('cap' + n); });
+  var marks    = Array.prototype.slice.call(document.querySelectorAll('.fl-mark'));
+
+  if (!video) return;
+
+  var scene = 1, playing = true, lastSave = null, wdLast = null, blobUrl = null;
+
+  function sceneTransform(s) {
+    if (s === 2) return 'scale(1.1) translate(-2%, 1%)';
+    if (s === 3) return 'scale(1.2) translate(-13%, 0)';
+    if (s === 4) return 'scale(1.12) translate(0, -1%)';
+    return 'scale(1.06)';
+  }
+
+  function applyScene(s) {
+    scene = s;
+    caps.forEach(function (c, i) {
+      if (!c) return;
+      if (i === s - 1) {
+        c.style.display = 'block';
+        c.style.animation = 'none';
+        void c.offsetWidth;                 // restart the entrance animation
+        c.style.animation = 'flkCapIn .6s ease both';
+      } else {
+        c.style.display = 'none';
+      }
+    });
+    marks.forEach(function (b, i) {
+      var on = (i === s - 1);
+      b.style.borderColor = on ? 'rgba(63,122,209,0.55)' : 'rgba(255,255,255,0.08)';
+      b.style.background  = on ? 'rgba(63,122,209,0.1)'  : 'rgba(255,255,255,0.015)';
+    });
+    video.style.transform = sceneTransform(s);
+    callout.style.display = (s === 2) ? 'inline-flex' : 'none';
+  }
+
+  function setPlaying(p) {
+    playing = p;
+    pauseIcon.style.display = p ? 'block' : 'none';
+    playIcon.style.display  = p ? 'none'  : 'block';
+  }
+
+  // Reflect the playhead onto scene / progress / save position.
+  video.addEventListener('timeupdate', function () {
+    var t = video.currentTime, d = video.duration || 0;
+    var s = 1;
+    for (var i = 0; i < MARKS.length; i++) { if (t >= MARKS[i] - 0.05) s = i + 1; }
+    if (s !== scene) applyScene(s);
+    prog.style.width = (d ? Math.min(1, t / d) * 100 : 0).toFixed(2) + '%';
+    if (lastSave == null || Math.abs(t - lastSave) > 0.8) {
+      lastSave = t;
+      try { localStorage.setItem(STORE_KEY, String(t)); } catch (e) {}
+    }
+  });
+
+  // Restore position from a previous visit.
+  video.addEventListener('loadedmetadata', function () {
+    try {
+      var t = parseFloat(localStorage.getItem(STORE_KEY));
+      if (t && isFinite(t) && video.duration && t < video.duration - 0.4) video.currentTime = t;
+    } catch (e) {}
+  });
+
+  // The clip's reported duration overruns its last decodable frame, so it stalls
+  // near the end and the native 'loop' never fires. This watchdog forces a clean
+  // loop and recovers any stall while the user intends playback.
+  setInterval(function () {
+    if (!video.duration || !playing) return;
+    var nearEnd = video.currentTime >= video.duration - 0.85;
+    var stalled = video.paused || video.currentTime === wdLast;
+    if (nearEnd && stalled) {
+      try { video.currentTime = 0; var p = video.play(); if (p && p.catch) p.catch(function(){}); } catch (e) {}
+    } else if (video.paused) {
+      var p2 = video.play(); if (p2 && p2.catch) p2.catch(function(){});
+    }
+    wdLast = video.currentTime;
+  }, 450);
+
+  // Play / pause button.
+  toggle.addEventListener('click', function () {
+    if (!playing || video.paused) {
+      setPlaying(true);
+      var p = video.play(); if (p && p.catch) p.catch(function(){});
+    } else {
+      setPlaying(false);
+      video.pause();
+    }
+  });
+
+  // Scene markers seek the video.
+  marks.forEach(function (b) {
+    b.addEventListener('click', function () {
+      var s = parseInt(b.getAttribute('data-scene'), 10);
+      applyScene(s);
+      try { video.currentTime = MARKS[s - 1] || 0; setPlaying(true); var p = video.play(); if (p && p.catch) p.catch(function(){}); } catch (e) {}
     });
   });
+
+  // Force mute + loop in code (attribute alone is unreliable across engines),
+  // then load the file as a Blob so it is fully seekable everywhere.
+  video.muted = true;
+  video.loop = true;
+  applyScene(1);
+  fetch(VIDEO_SRC)
+    .then(function (r) { return r.blob(); })
+    .then(function (b) {
+      blobUrl = URL.createObjectURL(b);
+      video.src = blobUrl;
+      var p = video.play(); if (p && p.catch) p.catch(function(){});
+    })
+    .catch(function () {
+      video.src = VIDEO_SRC;
+      var p = video.play(); if (p && p.catch) p.catch(function(){});
+    });
+})();
 </script>
 </body>
 </html>
