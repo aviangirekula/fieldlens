@@ -3,434 +3,660 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>FieldLens: An AI mentor for first-week HVAC technicians</title>
-<meta name="description" content="Point your phone at any HVAC component for an instant safety check and a step-by-step inspection drill. AI field training for new HVAC technicians." />
-<meta property="og:title" content="FieldLens: AI field training for HVAC technicians" />
-<meta property="og:description" content="Point your phone at a component, get an instant safety verdict and a guided inspection walkthrough." />
+<title>FieldLens. AI safety and inspection coaching for new HVAC technicians</title>
+<meta name="description" content="Point your phone at any HVAC component for an instant Safe, Caution, or Do Not Touch verdict and a step by step guided inspection. Computer vision, runs in any phone browser, no install." />
+<meta name="theme-color" content="#0e1014" />
+<meta property="og:title" content="FieldLens. AI safety and inspection coaching for HVAC technicians" />
+<meta property="og:description" content="Point your phone at a component, get an instant safety verdict and a guided inspection. Runs in any phone browser, nothing to install." />
 <meta property="og:type" content="website" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <style>
   :root{
-    --bg:#0e1014; --bg2:#15181d; --card:#171a20; --line:#262a31;
-    --ink:#eef2ff; --mut:#9aa4b6; --brand:#3f7ad1; --brand2:#6aa0f5;
+    /* Surfaces - solid near-black, no mesh, no gradients. */
+    --bg:#0e1014; --bg-2:#15181d; --surface:#171a20; --surface-2:#1d212a;
+    --line:rgba(255,255,255,.09); --line-2:rgba(255,255,255,.14);
+    /* Text - high contrast on dark. */
+    --ink:#f3f5f8; --ink-2:#c2c8d2; --mut:#9aa1ad; --mut-2:#7f8692;
+    /* ONE steel-blue accent, as a single-hue family tuned for AA contrast.
+       --brand: identity (large text, icons, borders) · passes 3:1
+       --brand-text: small accent text and links · passes 4.5:1
+       --brand-ink: button fill behind white text · passes 4.5:1 */
+    --brand:#3f7ad1; --brand-text:#6fa0e6; --brand-ink:#2f63b0;
+    --brand-dim:rgba(63,122,209,.12); --brand-border:rgba(63,122,209,.34);
+    /* SAFETY STATUS COLORS - used ONLY to signal safety state, never decoration.
+       Green only ever means Safe. */
     --safe:#2fb866; --caution:#e89a26; --danger:#e5484d;
-    --shadow-card:0 2px 10px -4px rgba(0,0,0,.5);
-    --maxw:1080px;
+    --shadow-card:0 1px 3px rgba(0,0,0,.45);
+    --shadow-pop:0 14px 40px -12px rgba(0,0,0,.7);
+    --maxw:1100px; --measure:68ch;
   }
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
-  body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-    background:var(--bg);
-    color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased}
+  body{margin:0;font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    background:var(--bg);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility}
   a{color:inherit;text-decoration:none}
-  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px}
-  .btn{display:inline-flex;align-items:center;gap:8px;border-radius:11px;padding:13px 20px;
-    font-weight:600;font-size:15px;border:1px solid transparent;cursor:pointer;transition:.18s;white-space:nowrap}
-  .btn-primary{background:var(--brand);color:#fff;box-shadow:var(--shadow-card)}
-  .btn-primary:hover{background:#4d86dc}
-  .btn-ghost{background:rgba(255,255,255,.04);border-color:var(--line);color:var(--ink)}
-  .btn-ghost:hover{background:rgba(255,255,255,.08)}
-  .eyebrow{color:var(--brand2);font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:12.5px}
-  h1,h2,h3{line-height:1.15;margin:0}
-  section{padding:84px 0;border-top:1px solid rgba(255,255,255,.04)}
+  img,svg,video{max-width:100%;height:auto;display:block}
+  h1,h2,h3{line-height:1.14;margin:0;letter-spacing:-.02em;font-weight:800}
+  p{margin:0}
+
+  /* Accessibility primitives */
+  .skip-link{position:absolute;left:-9999px;top:0;z-index:200;background:var(--surface-2);
+    color:var(--ink);padding:11px 16px;border-radius:10px;border:1px solid var(--line-2);font-weight:600}
+  .skip-link:focus{left:12px;top:12px}
+  :focus-visible{outline:2px solid var(--brand-text);outline-offset:2px;border-radius:6px}
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;
+      transition-duration:.01ms!important;scroll-behavior:auto!important}
+  }
+
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
   .mut{color:var(--mut)}
+  section{padding:104px 0;border-top:1px solid var(--line)}
+  .eyebrow{display:block;color:var(--brand-text);font-weight:700;letter-spacing:.13em;
+    text-transform:uppercase;font-size:12.5px;margin-bottom:14px}
+  .sec-head{max-width:660px;margin-bottom:44px}
+  .sec-head h2{font-size:clamp(26px,3.4vw,36px)}
+  .sec-head p{margin-top:14px;font-size:17px;max-width:var(--measure)}
+
+  /* Buttons - 44px min target, depth from border + micro-shadow, never glow. */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;border-radius:11px;
+    padding:13px 20px;min-height:46px;font-weight:600;font-size:15px;border:1px solid transparent;
+    cursor:pointer;transition:background .18s,border-color .18s,transform .08s;white-space:nowrap}
+  .btn:active{transform:translateY(1px)}
+  .btn-primary{background:var(--brand-ink);color:#fff;box-shadow:var(--shadow-card)}
+  .btn-primary:hover{background:#356cbf}
+  .btn-ghost{background:transparent;border-color:var(--line-2);color:var(--ink)}
+  .btn-ghost:hover{background:var(--bg-2);border-color:var(--mut-2)}
+  .btn svg{width:17px;height:17px}
+
+  /* Icon tile - replaces every emoji. */
+  .ic{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;flex:none;
+    background:var(--surface-2);border:1px solid var(--line);color:var(--brand);margin-bottom:18px}
+  .ic svg{width:23px;height:23px;stroke:currentColor;stroke-width:1.7;fill:none;
+    stroke-linecap:round;stroke-linejoin:round}
 
   /* NAV */
-  header{position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);
-    background:rgba(14,16,20,.78);border-bottom:1px solid rgba(255,255,255,.06)}
-  .nav{display:flex;align-items:center;justify-content:space-between;height:64px}
-  .logo{display:flex;align-items:center;gap:9px;font-weight:800;letter-spacing:-.01em}
-  .logo .dot{width:22px;height:22px;border-radius:7px;background:var(--brand)}
-  .navlinks{display:flex;gap:26px;align-items:center}
-  .navlinks a{color:var(--mut);font-size:14.5px;font-weight:500}
+  header{position:sticky;top:0;z-index:50;backdrop-filter:blur(12px);
+    background:rgba(14,16,20,.82);border-bottom:1px solid var(--line)}
+  .nav{display:flex;align-items:center;justify-content:space-between;height:66px}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:-.01em;font-size:17px}
+  .logo .mark{width:24px;height:24px;border-radius:7px;background:var(--brand);display:grid;place-items:center}
+  .logo .mark svg{width:15px;height:15px;stroke:#fff;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .navlinks{display:flex;gap:28px;align-items:center}
+  .navlinks a{color:var(--mut);font-size:14.5px;font-weight:500;transition:color .15s}
   .navlinks a:hover{color:var(--ink)}
-  .navtoggle{display:none;background:none;border:0;color:var(--ink);font-size:24px;cursor:pointer}
-  @media(max-width:820px){
-    .navlinks{display:none;position:absolute;top:64px;left:0;right:0;flex-direction:column;
-      gap:0;background:var(--bg2);border-bottom:1px solid var(--line);padding:8px 0}
+  .navlinks .btn{color:#fff}
+  .navtoggle{display:none;background:none;border:0;color:var(--ink);cursor:pointer;width:44px;height:44px;
+    align-items:center;justify-content:center}
+  .navtoggle svg{width:24px;height:24px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round}
+  @media(max-width:860px){
+    .navlinks{display:none;position:absolute;top:66px;left:0;right:0;flex-direction:column;gap:0;
+      background:var(--bg-2);border-bottom:1px solid var(--line);padding:8px 0}
     .navlinks.open{display:flex}
-    .navlinks a{padding:13px 22px;width:100%}
-    .navtoggle{display:block}
+    .navlinks a{padding:14px 24px;width:100%;min-height:44px;display:flex;align-items:center}
+    .navlinks .btn{margin:8px 24px;width:calc(100% - 48px)}
+    .navtoggle{display:flex}
   }
 
   /* HERO */
-  .hero{display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:center;padding:78px 0 70px}
-  .hero h1{font-size:clamp(30px,4.6vw,50px);font-weight:800;letter-spacing:-.02em;margin:16px 0 16px}
-  .hero p.lead{font-size:18px;max-width:540px}
-  .cta-row{display:flex;gap:12px;margin-top:26px;flex-wrap:wrap}
-  .cred{margin-top:20px;font-size:13.5px;color:var(--mut)}
-  .cred b{color:var(--ink)}
-  @media(max-width:820px){.hero{grid-template-columns:1fr;gap:36px;padding:54px 0 40px}}
+  .hero{display:grid;grid-template-columns:1.1fr .9fr;gap:56px;align-items:center;padding:92px 0 84px}
+  .hero h1{font-size:clamp(33px,4.8vw,53px);margin:18px 0 20px}
+  .hero p.lead{font-size:18.5px;color:var(--ink-2);max-width:33em}
+  .cta-row{display:flex;gap:12px;margin-top:30px;flex-wrap:wrap}
+  .hero-trust{margin-top:26px;font-size:14px;color:var(--mut);display:flex;flex-wrap:wrap;gap:8px 18px}
+  .hero-trust span{display:inline-flex;align-items:center;gap:7px}
+  .hero-trust svg{width:15px;height:15px;stroke:var(--brand);stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  @media(max-width:860px){.hero{grid-template-columns:1fr;gap:44px;padding:60px 0 44px}}
 
-  /* PHONE MOCKUP */
-  .phone{justify-self:center;width:268px;height:548px;border-radius:38px;background:#05070f;
-    border:10px solid #1b2237;box-shadow:0 40px 80px -30px #000, inset 0 0 0 1px #2a3550;position:relative;overflow:hidden}
-  .phone .screen{position:absolute;inset:0;border-radius:28px;overflow:hidden;
-    background:linear-gradient(180deg,#1f232b,#0c0e12)}
-  .cam{position:absolute;inset:0;background:
-    repeating-linear-gradient(135deg,#23272f 0 14px,#1f232b 14px 28px)}
-  .reticle{position:absolute;left:18%;top:30%;width:64%;height:30%;border:2px solid var(--caution);
-    border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.28)}
-  .reticle:after{content:"Run capacitor";position:absolute;left:0;top:-26px;background:var(--caution);
-    color:#04121a;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px}
-  .verdict{position:absolute;left:14px;right:14px;bottom:88px;background:rgba(232,154,38,.16);
-    border:1px solid var(--caution);border-radius:12px;padding:11px 12px}
-  .verdict .tag{display:inline-block;background:var(--caution);color:#1a1205;font-weight:800;
-    font-size:10.5px;padding:2px 7px;border-radius:5px;letter-spacing:.04em}
-  .verdict .txt{font-size:12px;color:#fde9c4;margin-top:6px}
-  .step{position:absolute;left:14px;right:14px;bottom:18px;background:rgba(15,21,48,.92);
-    border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:11.5px}
-  .step b{color:var(--brand)}
+  /* PHONE SCHEMATIC - a deliberate illustration of the interface, not a screenshot. */
+  .device{justify-self:center;width:264px;height:540px;border-radius:38px;background:#05070b;
+    border:10px solid #1b1f27;box-shadow:var(--shadow-pop);position:relative;overflow:hidden}
+  .device .screen{position:absolute;inset:0;border-radius:28px;overflow:hidden;background:#0c0e12}
+  .cam{position:absolute;inset:0;background:repeating-linear-gradient(135deg,#23272f 0 15px,#1f232b 15px 30px)}
+  .reticle{position:absolute;left:17%;top:27%;width:66%;height:31%;border:2px solid var(--caution);
+    border-radius:12px;box-shadow:0 0 0 9999px rgba(6,7,10,.5)}
+  .reticle .tag{position:absolute;left:-2px;top:-27px;background:var(--caution);color:#1a1205;font-size:11px;
+    font-weight:700;padding:3px 8px;border-radius:6px;white-space:nowrap}
+  .verdict{position:absolute;left:14px;right:14px;bottom:86px;background:var(--surface);
+    border:1px solid var(--line-2);border-left:3px solid var(--caution);border-radius:12px;padding:11px 13px}
+  .verdict .vtag{display:inline-flex;align-items:center;gap:5px;color:var(--caution);font-weight:700;
+    font-size:11px;letter-spacing:.04em}
+  .verdict .vtag svg{width:13px;height:13px;stroke:currentColor;stroke-width:2;fill:none}
+  .verdict .vtxt{font-size:11.5px;color:var(--ink-2);margin-top:6px;line-height:1.45}
+  .step{position:absolute;left:14px;right:14px;bottom:16px;background:var(--surface-2);
+    border:1px solid var(--line);border-radius:12px;padding:10px 13px;font-size:11.5px;color:var(--ink-2)}
+  .step b{color:var(--brand-text);font-weight:700}
+  .device-cap{margin-top:14px;text-align:center;font-size:12px;color:var(--mut-2)}
 
-  /* CARDS / GRID */
-  .grid{display:grid;gap:18px}
+  /* TRUST STRIP */
+  .strip{display:flex;flex-wrap:wrap;gap:14px}
+  .strip .chip{display:inline-flex;align-items:center;gap:9px;background:var(--surface);
+    border:1px solid var(--line);border-radius:11px;padding:12px 16px;font-size:14px;color:var(--ink-2)}
+  .strip .chip svg{width:17px;height:17px;stroke:var(--brand);stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+
+  /* GRID + CARDS */
+  .grid{display:grid;gap:20px}
   .g3{grid-template-columns:repeat(3,1fr)}
   .g2{grid-template-columns:repeat(2,1fr)}
-  @media(max-width:820px){.g3,.g2{grid-template-columns:1fr}}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px;box-shadow:var(--shadow-card)}
-  .card h3{font-size:18px;margin-bottom:8px}
-  .card .ic{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;
-    background:var(--bg2);border:1px solid var(--line);color:var(--brand2);margin-bottom:14px}
-  .num{font-size:34px;font-weight:800;color:var(--ink)}
+  @media(max-width:860px){.g3,.g2{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:26px;
+    box-shadow:var(--shadow-card)}
+  .card h3{font-size:18.5px;margin-bottom:9px}
+  .card p{color:var(--mut);font-size:15px}
+  .stat{font-size:34px;font-weight:800;color:var(--ink);letter-spacing:-.02em}
+  .stat.safe{color:var(--safe)}
+  .source{font-size:12.5px;color:var(--mut-2);margin-top:18px}
+  .source a{color:var(--brand-text)}
 
-  .sec-head{max-width:680px;margin-bottom:34px}
-  .sec-head h2{font-size:clamp(24px,3.2vw,33px);font-weight:800;letter-spacing:-.02em;margin:12px 0 12px}
+  .stepn{font-size:12.5px;font-weight:700;color:var(--brand-text);letter-spacing:.08em;display:block;margin-bottom:7px}
 
-  /* STEPS */
-  .steps{counter-reset:s}
-  .stepcard{position:relative;padding-left:18px}
-  .stepcard .n{font-size:13px;font-weight:800;color:var(--brand2)}
+  /* IN ACTION - placeholders, clearly marked, well framed. */
+  .shots{display:grid;grid-template-columns:1.5fr 1fr;gap:20px}
+  @media(max-width:860px){.shots{grid-template-columns:1fr}}
+  .ph{position:relative;border:1px dashed var(--line-2);border-radius:16px;background:
+    repeating-linear-gradient(135deg,rgba(255,255,255,.012) 0 16px,transparent 16px 32px),var(--surface);
+    display:grid;place-items:center;text-align:center;padding:28px;min-height:230px}
+  .ph .ph-badge{position:absolute;top:14px;left:14px;font-size:11px;font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--mut-2);border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+  .ph .ph-ic{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;margin:0 auto 14px;
+    background:var(--surface-2);border:1px solid var(--line);color:var(--brand)}
+  .ph .ph-ic svg{width:23px;height:23px;stroke:currentColor;stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .ph h3{font-size:16px;margin-bottom:6px}
+  .ph p{font-size:13.5px;color:var(--mut);max-width:42ch;margin:0 auto}
+  .ph.tall{min-height:480px}
+  @media(max-width:860px){.ph.tall{min-height:340px}}
 
-  /* DEMO */
-  .demo-video{position:relative;aspect-ratio:16/9;border-radius:18px;overflow:hidden;
-    border:1px solid var(--line);background:var(--card);display:grid;place-items:center}
-  .play{width:74px;height:74px;border-radius:50%;background:var(--brand);display:grid;place-items:center;
-    box-shadow:var(--shadow-card);transition:.2s}
-  .demo-video:hover .play{transform:scale(1.06)}
-  .play svg{margin-left:4px}
+  /* SAFETY */
+  .safety{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:38px}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
+  .lvl{display:inline-flex;align-items:center;gap:9px;font-size:13.5px;font-weight:700;padding:9px 14px;
+    border-radius:11px;border:1px solid}
+  .lvl svg{width:16px;height:16px;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .lvl.safe{color:var(--safe);border-color:rgba(47,184,102,.4);background:rgba(47,184,102,.09)}
+  .lvl.caution{color:var(--caution);border-color:rgba(232,154,38,.4);background:rgba(232,154,38,.09)}
+  .lvl.danger{color:var(--danger);border-color:rgba(229,72,77,.42);background:rgba(229,72,77,.10)}
+  .lvl svg{stroke:currentColor}
+  .disc{font-size:13px;color:var(--mut);margin-top:24px;padding:14px 16px;border:1px solid var(--line);
+    border-radius:12px;background:var(--bg-2)}
 
-  /* SAFETY callout */
-  .safety{background:var(--card);
-    border:1px solid var(--line);border-radius:18px;padding:30px}
-  .pills{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
-  .pill{font-size:12px;font-weight:700;padding:6px 11px;border-radius:999px;border:1px solid}
-  .pill.safe{color:var(--safe);border-color:rgba(47,184,102,.4);background:rgba(47,184,102,.1)}
-  .pill.caution{color:var(--caution);border-color:rgba(232,154,38,.4);background:rgba(232,154,38,.1)}
-  .pill.danger{color:var(--danger);border-color:rgba(229,72,77,.4);background:rgba(229,72,77,.1)}
-
-  /* TEAM */
-  .person{display:flex;gap:16px;align-items:flex-start}
-  .avatar{width:64px;height:64px;border-radius:14px;flex:none;
-    background:var(--brand);display:grid;place-items:center;
-    font-weight:800;font-size:22px;color:#fff}
-  .ph{color:var(--caution)} /* placeholder highlight */
-
-  /* ROADMAP */
-  .road li{margin:10px 0;padding-left:6px}
+  /* lists */
   ul.clean{list-style:none;padding:0;margin:0}
-  ul.clean li{position:relative;padding-left:26px;margin:11px 0;color:var(--mut)}
-  ul.clean li:before{content:"";position:absolute;left:0;top:9px;width:9px;height:9px;border-radius:3px;
-    background:var(--brand)}
+  ul.clean li{position:relative;padding-left:28px;margin:13px 0;color:var(--ink-2);font-size:15.5px}
+  ul.clean li svg{position:absolute;left:0;top:4px;width:17px;height:17px;stroke:var(--brand);
+    stroke-width:1.9;fill:none;stroke-linecap:round;stroke-linejoin:round}
 
-  footer{padding:54px 0 40px;border-top:1px solid var(--line)}
-  .disc{font-size:12.5px;color:var(--mut);margin-top:22px;padding:14px 16px;border:1px dashed var(--line);border-radius:12px}
-  .foot-cta{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;align-items:center}
-  .beta{display:inline-block;font-size:11px;font-weight:700;color:var(--brand2);
-    border:1px solid rgba(63,122,209,.35);background:rgba(63,122,209,.1);padding:3px 9px;border-radius:999px}
+  /* FOUNDER */
+  .person{display:flex;gap:18px;align-items:flex-start}
+  .avatar{width:66px;height:66px;border-radius:15px;flex:none;background:var(--surface-2);
+    border:1px solid var(--line-2);display:grid;place-items:center;font-weight:800;font-size:23px;color:var(--brand-text)}
+  .person a.link{color:var(--brand-text);font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:6px;margin-top:10px}
+  .person a.link svg{width:15px;height:15px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+
+  /* FAQ - native accordion, keyboard accessible. */
+  .faq details{border:1px solid var(--line);border-radius:13px;background:var(--surface);
+    padding:0 20px;margin-bottom:12px;transition:border-color .15s}
+  .faq details[open]{border-color:var(--line-2)}
+  .faq summary{list-style:none;cursor:pointer;padding:19px 0;font-weight:600;font-size:16px;
+    display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px}
+  .faq summary::-webkit-details-marker{display:none}
+  .faq summary .chev{width:18px;height:18px;flex:none;stroke:var(--mut);stroke-width:2;fill:none;
+    stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
+  .faq details[open] summary .chev{transform:rotate(180deg)}
+  .faq .ans{padding:0 0 20px;color:var(--mut);font-size:15px;max-width:var(--measure)}
+
+  /* FINAL CTA */
+  .final{border:1px solid var(--line-2);border-radius:22px;background:var(--surface);padding:54px 40px;
+    text-align:center}
+  .final h2{font-size:clamp(26px,3.4vw,36px)}
+  .final p{color:var(--mut);margin:14px auto 0;max-width:46ch;font-size:17px}
+  .final .cta-row{justify-content:center;margin-top:30px}
+
+  /* FOOTER */
+  footer{border-top:1px solid var(--line);padding:64px 0 48px}
+  .foot-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:32px}
+  @media(max-width:860px){.foot-grid{grid-template-columns:1fr 1fr}}
+  @media(max-width:520px){.foot-grid{grid-template-columns:1fr}}
+  .foot-col h4{font-size:12.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--mut-2);
+    font-weight:700;margin:0 0 14px}
+  .foot-col a{display:block;color:var(--mut);font-size:14.5px;margin:9px 0;transition:color .15s}
+  .foot-col a:hover{color:var(--ink)}
+  .foot-brand p{color:var(--mut);font-size:14px;margin-top:12px;max-width:32ch}
+  .foot-bottom{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;align-items:center;
+    margin-top:48px;padding-top:26px;border-top:1px solid var(--line);font-size:13px;color:var(--mut)}
+  .foot-bottom a{color:var(--brand-text)}
 </style>
 </head>
 <body>
 
+<a class="skip-link" href="#main">Skip to content</a>
+
 <header>
   <div class="wrap nav">
-    <a class="logo" href="#top"><span class="dot"></span> FieldLens</a>
-    <button class="navtoggle" aria-label="Menu" onclick="document.getElementById('nl').classList.toggle('open')">☰</button>
-    <nav class="navlinks" id="nl">
+    <a class="logo" href="#top" aria-label="FieldLens home">
+      <span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></span>
+      FieldLens
+    </a>
+    <button class="navtoggle" aria-label="Open menu" aria-expanded="false" aria-controls="nl" onclick="var n=document.getElementById('nl');var o=n.classList.toggle('open');this.setAttribute('aria-expanded',o);this.setAttribute('aria-label',o?'Close menu':'Open menu')">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+    <nav class="navlinks" id="nl" aria-label="Primary">
       <a href="#problem">Problem</a>
       <a href="#how">How it works</a>
-      <a href="#demo">Demo</a>
+      <a href="#action">In action</a>
       <a href="#evidence">Evidence</a>
       <a href="#safety">Safety</a>
-      <a href="#team">Team</a>
-      <a class="btn btn-primary" href="/" target="_blank" rel="noopener">Try the live demo →</a>
+      <a href="#faq">FAQ</a>
+      <a class="btn btn-primary" href="/" target="_blank" rel="noopener">Try the live demo</a>
     </nav>
   </div>
 </header>
 
 <a id="top"></a>
-<div class="wrap">
-  <section class="hero" style="border-top:0">
-    <div>
-      <span class="beta">● Open beta, live now</span>
-      <h1>Point your phone at any HVAC component. Get an instant safety check, then a guided inspection.</h1>
-      <p class="lead mut">FieldLens is an AI mentor for first-week HVAC technicians. It identifies the part, tells you whether it's safe to inspect, and walks you through what to do, step by step. Any phone browser. Nothing to install.</p>
-      <div class="cta-row">
-        <a class="btn btn-primary" href="/" target="_blank" rel="noopener">Try the live demo →</a>
-        <a class="btn btn-ghost" href="#how">See how it works</a>
-      </div>
-      <p class="cred">Built by <b>Avilash Angirekula</b>, with a deep AR, computer-vision &amp; ML research background.</p>
-    </div>
+<main id="main">
 
-    <div class="phone" aria-hidden="true">
-      <div class="screen">
-        <div class="cam"></div>
-        <div class="reticle"></div>
-        <div class="verdict">
-          <span class="tag">⚠ CAUTION</span>
-          <div class="txt">May be energized. Look only. Do not touch without lockout/tagout and a qualified supervisor.</div>
+  <!-- HERO -->
+  <div class="wrap">
+    <section class="hero" style="border-top:0">
+      <div>
+        <span class="eyebrow">Open beta, live now</span>
+        <h1>Know if it is safe to touch. Then exactly how to inspect it.</h1>
+        <p class="lead">FieldLens is a safety and inspection coach for first week HVAC technicians. Point your phone at a component. It identifies the part, tells you whether it is safe to inspect, and walks you through the check step by step. It runs in any phone browser, with nothing to install.</p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="/" target="_blank" rel="noopener">
+            Try the live demo
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+          <a class="btn btn-ghost" href="#how">See how it works</a>
         </div>
-        <div class="step"><b>Step 1 of 6:</b> Confirm power is off at the disconnect before touching anything.</div>
+        <div class="hero-trust">
+          <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg> Any phone browser, no install</span>
+          <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg> Computer vision, not a chatbot</span>
+          <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg> Errs toward caution by design</span>
+        </div>
+      </div>
+
+      <div>
+        <div class="device" role="img" aria-label="Illustration of the FieldLens interface: a run capacitor outlined in amber with a Caution verdict and the first inspection step.">
+          <div class="screen">
+            <div class="cam" aria-hidden="true"></div>
+            <div class="reticle" aria-hidden="true"><span class="tag">Run capacitor</span></div>
+            <div class="verdict" aria-hidden="true">
+              <span class="vtag"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg> CAUTION</span>
+              <div class="vtxt">May hold a charge. Look only. Do not touch without lockout, tagout, and a qualified supervisor.</div>
+            </div>
+            <div class="step" aria-hidden="true"><b>Step 1 of 6.</b> Confirm power is off at the disconnect before touching anything.</div>
+          </div>
+        </div>
+        <p class="device-cap">Interface illustration. The live demo runs on your own phone.</p>
+      </div>
+    </section>
+  </div>
+
+  <!-- TRUST STRIP -->
+  <section style="padding:36px 0">
+    <div class="wrap strip">
+      <span class="chip"><svg viewBox="0 0 24 24"><path d="M12 2 4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6Z"/></svg> Safety first verdict on every scan</span>
+      <span class="chip"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg> Works on the phone a tech already carries</span>
+      <span class="chip"><svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2Z"/><path d="M9 21h6"/></svg> Built by a computer vision and ML researcher</span>
+    </div>
+  </section>
+
+  <!-- PROBLEM -->
+  <section id="problem">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">The problem</span>
+        <h2>The trades are short handed, and the field is unforgiving.</h2>
+        <p class="mut">New HVAC techs are put on live equipment fast, often without a mentor at their shoulder. Mistakes are expensive, callbacks hurt, and some are dangerous.</p>
+      </div>
+      <div class="grid g3">
+        <div class="card">
+          <div class="stat">~37,700</div>
+          <h3>openings every year</h3>
+          <p>U.S. HVAC technician openings projected each year from 2023 to 2033. Demand keeps outpacing trained, confident workers.</p>
+        </div>
+        <div class="card">
+          <div class="stat">Live voltage</div>
+          <h3>on day one</h3>
+          <p>First year techs work next to capacitors and contactors that can hold a lethal charge, frequently with no one to ask.</p>
+        </div>
+        <div class="card">
+          <div class="stat">Misdiagnosis</div>
+          <h3>is the costly default</h3>
+          <p>Condemning a compressor when it is a fifteen dollar capacitor, or skipping a discharge step. The gap between knows and new is huge.</p>
+        </div>
+      </div>
+      <p class="source">Source. U.S. Bureau of Labor Statistics, Occupational Outlook Handbook, HVACR Mechanics and Installers.</p>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">How it works</span>
+        <h2>A mentor in your pocket, in three steps.</h2>
+      </div>
+      <div class="grid g3">
+        <div class="card">
+          <div class="ic"><svg viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 1 2-2h2l1.5-2h7L19 6h0a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><circle cx="12" cy="13" r="3.5"/></svg></div>
+          <span class="stepn">STEP 1</span>
+          <h3>Point or upload</h3>
+          <p>Aim your phone camera at the component, or upload a photo. No app install. It runs in the browser the tech already has open.</p>
+        </div>
+        <div class="card">
+          <div class="ic"><svg viewBox="0 0 24 24"><path d="M12 2 4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6Z"/><path d="M9 12l2 2 4-4"/></svg></div>
+          <span class="stepn">STEP 2</span>
+          <h3>Instant safety verdict</h3>
+          <p>FieldLens identifies the part and returns Safe, Caution, or Do Not Touch with the plain reason why, and a highlight box drawn on the component, colored by hazard. When unsure, it chooses the more cautious verdict.</p>
+        </div>
+        <div class="card">
+          <div class="ic"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg></div>
+          <span class="stepn">STEP 3</span>
+          <h3>Guided walkthrough</h3>
+          <p>A step by step inspection drill. What to look at, what normal looks like, the common mistake to avoid, and a field tip, with the box moving to each spot.</p>
+        </div>
       </div>
     </div>
   </section>
-</div>
 
-<!-- PROBLEM -->
-<section id="problem">
-  <div class="wrap">
-    <div class="sec-head">
-      <span class="eyebrow">The problem</span>
-      <h2>The trades are short-handed, and the field is unforgiving.</h2>
-      <p class="mut">New HVAC techs are thrown onto live equipment fast, with little supervision. Mistakes are expensive, callbacks hurt, and some are dangerous.</p>
-    </div>
-    <div class="grid g3">
-      <div class="card">
-        <div class="num">~37,700</div>
-        <h3>openings every year</h3>
-        <p class="mut">U.S. HVAC technician openings projected annually (2023–33, BLS). Demand keeps outpacing trained, confident workers.</p>
+  <!-- IN ACTION -->
+  <section id="action">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">In action</span>
+        <h2>See the verdict land on real equipment.</h2>
+        <p class="mut">The strongest proof is the product itself. The clips and frames below come from the live app, not a mockup.</p>
       </div>
-      <div class="card">
-        <div class="num">Live voltage</div>
-        <h3>on day one</h3>
-        <p class="mut">First-year techs work next to capacitors and contactors that hold lethal charge, often without a mentor at their shoulder.</p>
-      </div>
-      <div class="card">
-        <div class="num">Misdiagnosis</div>
-        <h3>is the costly default</h3>
-        <p class="mut">Condemning a compressor when it's a $15 capacitor, or skipping a discharge step: the gap between "knows" and "new" is huge.</p>
-      </div>
-    </div>
-    <p class="mut" style="font-size:12.5px;margin-top:16px">Source: U.S. Bureau of Labor Statistics, Occupational Outlook Handbook, HVACR Mechanics &amp; Installers.</p>
-  </div>
-</section>
-
-<!-- HOW IT WORKS -->
-<section id="how">
-  <div class="wrap">
-    <div class="sec-head">
-      <span class="eyebrow">How it works</span>
-      <h2>A mentor in your pocket, in three steps.</h2>
-    </div>
-    <div class="grid g3 steps">
-      <div class="card stepcard">
-        <div class="ic">📷</div>
-        <span class="n">STEP 1</span>
-        <h3>Point or upload</h3>
-        <p class="mut">Aim your phone camera at the component, or upload a photo. No app install; it runs in the browser.</p>
-      </div>
-      <div class="card stepcard">
-        <div class="ic">🛡️</div>
-        <span class="n">STEP 2</span>
-        <h3>Instant safety verdict</h3>
-        <p class="mut">FieldLens identifies the part and returns <b>Safe&nbsp;/&nbsp;Caution&nbsp;/&nbsp;Do&nbsp;Not&nbsp;Touch</b> with the plain reason why, and a highlight box color-coded by hazard drawn right on the component. It errs toward caution when unsure.</p>
-      </div>
-      <div class="card stepcard">
-        <div class="ic">🧭</div>
-        <span class="n">STEP 3</span>
-        <h3>Guided walkthrough</h3>
-        <p class="mut">A step-by-step inspection drill: what to look at, what "normal" looks like, common mistakes, and field tips.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- DEMO -->
-<section id="demo">
-  <div class="wrap">
-    <div class="sec-head">
-      <span class="eyebrow">See it work</span>
-      <h2>It's live. Try it in 30 seconds.</h2>
-      <p class="mut">Open the demo on your phone and point it at any HVAC unit, or on a laptop, upload a photo.</p>
-    </div>
-    <!-- Drop your uploaded product-demo video embed (YouTube/Loom <iframe>) here when recorded. -->
-    <a class="demo-video" href="/" target="_blank" rel="noopener" aria-label="Open the live demo">
-      <div style="text-align:center">
-        <div class="play" style="margin:0 auto"><svg width="26" height="26" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg></div>
-        <div style="margin-top:16px;font-weight:600;color:var(--ink)">Open the live demo</div>
-        <div class="mut" style="font-size:13px">point your phone at any HVAC component</div>
-      </div>
-    </a>
-    <div class="cta-row" style="margin-top:22px">
-      <a class="btn btn-primary" href="/" target="_blank" rel="noopener">Launch the live demo →</a>
-      <span class="mut" style="align-self:center;font-size:14px">Any phone browser · no install · laptop? upload a photo</span>
-    </div>
-  </div>
-</section>
-
-<!-- EVIDENCE -->
-<section id="evidence">
-  <div class="wrap">
-    <div class="sec-head">
-      <span class="eyebrow">Evidence</span>
-      <h2>We measure what we build.</h2>
-      <p class="mut">An internal benchmark on a labeled image set across the HVAC/electrical components the product targets.</p>
-    </div>
-    <div class="grid g3">
-      <div class="card">
-        <div class="num" style="color:var(--safe)">0&nbsp;/&nbsp;8</div>
-        <h3>hazards called "safe"</h3>
-        <p class="mut">Across 8 visibly-dangerous or live-exposed parts (blown caps, burnt contactors, open panels), FieldLens marked <b>zero</b> as safe to inspect.</p>
-      </div>
-      <div class="card">
-        <div class="num">80%</div>
-        <h3>component-ID accuracy</h3>
-        <p class="mut">24 of 30 images, strict exact-match across 15 component types. Close synonyms count as misses, so real recognition runs higher.</p>
-      </div>
-      <div class="card">
-        <div class="num">~6s</div>
-        <h3>photo → full drill</h3>
-        <p class="mut">Median end to end. A fast safety verdict shows first, in about a second, while the full walkthrough loads.</p>
-      </div>
-    </div>
-    <p class="mut" style="font-size:12.5px;margin-top:16px">
-      Measured on our 30-image set through the live app, repeated across runs (30/30, no errors each time). The 0-of-8 hazard result held in every run. Honest caveats: these are web-sourced images (catalog + field photos), cleaner than a phone in a dark mechanical room, so treat them as an upper bound, not field performance; and ID is scored on strict exact match. The model reserves "do not touch" for genuinely hazardous gear and will call low-voltage parts safe, and we're tightening that for live panels and boards. Next: benchmarking on real field photos with design-partner techs.
-    </p>
-    <div class="card" style="margin-top:18px">
-      <h3>Status: open beta</h3>
-      <p class="mut">A live product you can try right now. We're pre-revenue and recruiting design-partner technicians and shops. No fabricated traction here, just what's real today.</p>
-    </div>
-  </div>
-</section>
-
-<!-- SAFETY -->
-<section id="safety">
-  <div class="wrap">
-    <div class="safety">
-      <span class="eyebrow">Safety</span>
-      <h2 style="font-size:clamp(22px,3vw,30px);margin:12px 0 12px">Safety is the product, not a feature.</h2>
-      <p class="mut">FieldLens is built for someone nervous, standing next to lethal voltage. When it isn't certain, it chooses the more cautious verdict. It never tells a new tech to touch, loosen, or probe anything without confirmed lockout/tagout and zero-voltage verification.</p>
-      <div class="pills">
-        <span class="pill safe">Safe to inspect</span>
-        <span class="pill caution">Caution required</span>
-        <span class="pill danger">Do not touch</span>
-      </div>
-      <p class="disc">AI-generated guidance. Always verify with a qualified supervisor. FieldLens is a training aid, not a substitute for proper training, procedures, or PPE.</p>
-    </div>
-  </div>
-</section>
-
-<!-- TEAM -->
-<section id="team">
-  <div class="wrap">
-    <div class="sec-head">
-      <span class="eyebrow">Team</span>
-      <h2>Why us.</h2>
-      <p class="mut">A founder with rare AR&nbsp;+&nbsp;computer-vision&nbsp;+&nbsp;ML research depth, the hard part of building this.</p>
-    </div>
-    <div class="grid">
-      <div class="card person">
-        <div class="avatar">A</div>
-        <div>
-          <h3>Avilash Angirekula <span class="mut" style="font-size:13px;font-weight:500">· Founder</span></h3>
-          <p class="mut">Built the FieldLens MVP. Computer-vision segmentation research (Cedars-Sinai &amp; Dartmouth labs); shipped real-time hand-tracking AR demoed to 4,500+.</p>
-          <a class="mut" style="font-size:13.5px" href="https://www.linkedin.com/in/avilash-angirekula-b7665a301/" target="_blank" rel="noopener">LinkedIn ↗</a>
+      <div class="shots">
+        <!-- ASSET 1 - DEMO LOOP.
+             Drop in a short, muted, looping MP4 or WebM (under ~2 MB, 16:9) of the real app:
+             ideally the moment a Do Not Touch part is outlined in RED on real equipment,
+             then the verdict and first step appearing. Add a poster image to avoid layout shift.
+             Replace this placeholder with, for example:
+             <video autoplay muted loop playsinline preload="none" poster="/site/assets/demo-poster.webp"
+                    width="800" height="450" style="border-radius:16px;border:1px solid var(--line)">
+               <source src="/site/assets/demo.webm" type="video/webm">
+               <source src="/site/assets/demo.mp4" type="video/mp4">
+             </video> -->
+        <div class="ph tall">
+          <span class="ph-badge">Asset needed</span>
+          <div>
+            <div class="ph-ic"><svg viewBox="0 0 24 24"><path d="m10 8 6 4-6 4Z"/><rect x="2" y="4" width="20" height="16" rx="3"/></svg></div>
+            <h3>Demo loop</h3>
+            <p>Short looping clip of a real scan. Best moment to capture: a Do Not Touch part outlined in red, then the verdict and first step. Muted MP4 or WebM, under 2 MB.</p>
+          </div>
+        </div>
+        <!-- ASSET 2 - PRODUCT SCREENSHOT.
+             Drop in one real screenshot of the redesigned app showing a verdict with the
+             highlight box and the why this verdict line. Use a real capture, never a mockup.
+             Replace with: <img src="/site/assets/verdict.webp" width="640" height="900"
+                                 loading="lazy" decoding="async" alt="FieldLens verdict screen with the component outlined and the reason for the verdict." > -->
+        <div class="ph">
+          <span class="ph-badge">Asset needed</span>
+          <div>
+            <div class="ph-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m4 15 4-4 5 5"/><path d="m14 13 2-2 4 4"/><circle cx="9" cy="9" r="1.4"/></svg></div>
+            <h3>Verdict screenshot</h3>
+            <p>One real capture of the verdict screen with the highlight box and the why this verdict line.</p>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- WHY NOW -->
-<section id="why">
-  <div class="wrap">
-    <div class="grid g2" style="align-items:center">
-      <div>
-        <span class="eyebrow">Why now</span>
-        <h2 style="font-size:clamp(22px,3vw,30px);margin:12px 0 12px">The timing just arrived.</h2>
-        <p class="mut">Phone-grade AI vision only recently became good and cheap enough to identify equipment and reason about safety in seconds, on the device a tech already carries. At the same time the skilled-trades labor gap keeps widening. The tool and the need met this year.</p>
+  <!-- SAFETY -->
+  <section id="safety">
+    <div class="wrap">
+      <div class="safety">
+        <span class="eyebrow">Safety</span>
+        <h2 style="font-size:clamp(23px,3vw,31px)">Safety is the product, not a feature.</h2>
+        <p class="mut" style="max-width:var(--measure);margin-top:14px">FieldLens is built for someone standing next to lethal voltage on their first week. When it is not certain, it chooses the more cautious verdict. It never tells a new tech to touch, loosen, or probe anything without confirmed lockout, tagout, and zero voltage verification. Every verdict carries a label and an icon, not color alone.</p>
+        <div class="legend" role="list">
+          <span class="lvl safe" role="listitem"><svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg> Safe to inspect</span>
+          <span class="lvl caution" role="listitem"><svg viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg> Caution required</span>
+          <span class="lvl danger" role="listitem"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg> Do not touch</span>
+        </div>
+        <p class="disc">AI generated guidance. Always verify with a qualified supervisor. FieldLens is a training aid, not a substitute for proper training, procedures, or personal protective equipment.</p>
       </div>
-      <div class="card">
-        <h3>The market</h3>
+    </div>
+  </section>
+
+  <!-- EVIDENCE -->
+  <section id="evidence">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Evidence, not traction</span>
+        <h2>We measure what we build.</h2>
+        <p class="mut">This is product evidence from an internal benchmark, not market traction. It is an honest read on how the model performs today, including where it falls short.</p>
+      </div>
+      <div class="grid g3">
+        <div class="card">
+          <div class="stat safe">0 of 8</div>
+          <h3>hazards called safe</h3>
+          <p>Across eight visibly dangerous or live exposed parts (blown caps, burnt contactors, open panels), FieldLens marked zero as safe to inspect.</p>
+        </div>
+        <div class="card">
+          <div class="stat">80%</div>
+          <h3>component ID accuracy</h3>
+          <p>24 of 30 images, strict exact match across 15 component types. Close synonyms count as misses, so real recognition runs higher.</p>
+        </div>
+        <div class="card">
+          <div class="stat">~6s</div>
+          <h3>photo to full drill</h3>
+          <p>Median end to end. A fast safety verdict shows first, in about a second, while the full walkthrough loads.</p>
+        </div>
+      </div>
+      <p class="source">Measured on a 30 image set through the live app, repeated across runs (30 of 30, no errors each time, and the 0 of 8 hazard result held every run). Honest caveats. These are web sourced images, cleaner than a phone in a dark mechanical room, so treat them as an upper bound, not field performance. ID is scored on strict exact match. The model reserves Do Not Touch for genuinely hazardous gear and will call low voltage parts safe, which we are tightening for live panels and boards. Next, benchmarking on real field photos with design partner techs.</p>
+    </div>
+  </section>
+
+  <!-- DEFENSIBILITY -->
+  <section id="moat">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Defensibility</span>
+        <h2>Why this is hard to copy.</h2>
+        <p class="mut">A chatbot that names a part is a weekend project. The compounding parts are ours.</p>
+      </div>
+      <div class="grid g2">
+        <div class="card">
+          <div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></div>
+          <h3>Per step look here highlighting</h3>
+          <p>FieldLens does not just describe a step. It anchors a box onto the exact spot in the tech's own photo, colored by hazard (red, amber, green) so the danger reads directly on the equipment. Spatial, in image guidance a generic chat answer cannot reproduce.</p>
+        </div>
+        <div class="card">
+          <div class="ic"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg></div>
+          <h3>A field data flywheel</h3>
+          <p>Every scan auto labels a real component in real field conditions. That proprietary dataset trains a custom, on device model that is faster, offline capable, and a moat rivals cannot shortcut by calling the same public API.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHY NOW -->
+  <section id="why">
+    <div class="wrap">
+      <div class="grid g2" style="align-items:center;gap:40px">
+        <div>
+          <span class="eyebrow">Why now</span>
+          <h2 style="font-size:clamp(23px,3vw,31px)">The timing just arrived.</h2>
+          <p class="mut" style="margin-top:14px;max-width:var(--measure)">Phone grade AI vision only recently became good and cheap enough to identify equipment and reason about safety in seconds, on the device a tech already carries. At the same time the skilled trades labor gap keeps widening. The tool and the need met this year.</p>
+        </div>
+        <div class="card">
+          <h3 style="margin-bottom:14px">The market</h3>
+          <ul class="clean">
+            <li><svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg><span><b>$158B</b> U.S. HVAC contractor market in 2025.</span></li>
+            <li><svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg><span><b>110k to 225k</b> technician shortage, projected to more than double within five years.</span></li>
+            <li><svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg><span><b>~25,000</b> techs leave the trade every year. Chronic turnover.</span></li>
+            <li><svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg><span><b>$15k to $25k</b> to replace one technician. Our ROI wedge.</span></li>
+          </ul>
+          <p class="source">Sources. IBISWorld, ServiceTitan, and industry turnover estimates.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROADMAP -->
+  <section id="roadmap">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Roadmap</span>
+        <h2>Where this goes.</h2>
+      </div>
+      <div class="grid g2">
         <ul class="clean">
-          <li><b>$158B</b> U.S. HVAC contractor market (IBISWorld, 2025).</li>
-          <li><b>110k → 225k</b> technician shortage, projected to more than double within five years.</li>
-          <li><b>~25,000</b> techs leave the trade every year. Chronic turnover.</li>
-          <li><b>$15k–$25k</b> to replace one technician. Our ROI wedge.</li>
+          <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span>Broaden coverage across more components and equipment types.</span></li>
+          <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span>Training progress tracking. What a tech has practiced and mastered.</span></li>
+          <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span>Offline and low signal mode for mechanical rooms and basements.</span></li>
         </ul>
-        <p class="mut" style="font-size:11.5px;margin-top:12px">Sources: IBISWorld; ServiceTitan; industry turnover estimates.</p>
+        <ul class="clean">
+          <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span>Pilots with trade schools and HVAC employers.</span></li>
+          <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span>On device model trained on the field data flywheel.</span></li>
+          <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span>Long term, registered augmented reality overlays and AR glasses, once the phone product is proven. Today the product is computer vision on a phone, not AR.</span></li>
+        </ul>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- MOAT / DEFENSIBILITY -->
-<section id="moat">
-  <div class="wrap">
-    <div class="sec-head">
-      <span class="eyebrow">Defensibility</span>
-      <h2>Why this is hard to copy.</h2>
-      <p class="mut">The obvious version, a chatbot that names a part, is a weekend project. The compounding parts are ours.</p>
-    </div>
-    <div class="grid g2">
-      <div class="card">
-        <div class="ic">🎯</div>
-        <h3>Per-step "look here" highlighting</h3>
-        <p class="mut">FieldLens doesn't just describe a step. It anchors a box onto the exact spot in the tech's own photo, color-coded by hazard (red, amber, green) so the danger reads directly on the equipment. Spatial, in-image guidance a generic chat answer can't reproduce.</p>
+  <!-- FOUNDER -->
+  <section id="team">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Founder</span>
+        <h2>Why us.</h2>
+        <p class="mut">A founder with real computer vision and ML research depth, which is the hard part of building this.</p>
       </div>
-      <div class="card">
-        <div class="ic">🔄</div>
-        <h3>A field-data flywheel</h3>
-        <p class="mut">Every scan auto-labels a real component in real field conditions. That proprietary dataset trains a custom, on-device model that's faster, offline-capable, and a moat rivals can't shortcut by calling the same public API.</p>
+      <div class="card person">
+        <div class="avatar" aria-hidden="true">A</div>
+        <div>
+          <h3>Avilash Angirekula <span class="mut" style="font-size:13.5px;font-weight:500">· Founder</span></h3>
+          <p class="mut" style="margin-top:8px;max-width:var(--measure)">Built the FieldLens MVP end to end. Computer vision segmentation research in the Cedars-Sinai and Dartmouth labs, where the work was teaching models to find and outline the right region in an image, the same core problem behind drawing a safe box on a component. Also shipped a real time hand tracking demo seen by 4,500 people, which is where the eye for fast, on device perception comes from.</p>
+          <a class="link" href="https://www.linkedin.com/in/avilash-angirekula-b7665a301/" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M6.94 5a2 2 0 1 1-4 0 2 2 0 0 1 4 0ZM3 8.98h3.9V21H3Zm6.5 0h3.7v1.64h.05c.52-.92 1.78-1.9 3.66-1.9 3.92 0 4.64 2.45 4.64 5.63V21h-3.9v-5.3c0-1.26-.02-2.9-1.77-2.9-1.77 0-2.04 1.38-2.04 2.8V21H9.5Z"/></svg>
+            LinkedIn
+          </a>
+        </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- ROADMAP -->
-<section id="roadmap">
-  <div class="wrap">
-    <div class="sec-head">
-      <span class="eyebrow">Roadmap</span>
-      <h2>Where this goes.</h2>
+  <!-- FAQ -->
+  <section id="faq">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">FAQ</span>
+        <h2>Honest answers.</h2>
+      </div>
+      <div class="faq">
+        <details>
+          <summary>Do I need to install an app? <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+          <p class="ans">No. FieldLens runs in any phone browser. You open a link, point your phone, and go. There is nothing to download and no account required to try it.</p>
+        </details>
+        <details>
+          <summary>Is this augmented reality? <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+          <p class="ans">No. Today FieldLens is computer vision applied to a phone photo. It identifies the component and draws a box on it. Registered AR overlays and AR glasses are a long term roadmap item, not the product you use now.</p>
+        </details>
+        <details>
+          <summary>How accurate is it? <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+          <p class="ans">On our internal 30 image benchmark, component identification was 80 percent on strict exact match, and zero of eight clearly hazardous parts were ever called safe. That is product evidence on clean web sourced images, not field validated performance yet. Real field photos are the next benchmark.</p>
+        </details>
+        <details>
+          <summary>Can I rely on it for safety decisions? <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+          <p class="ans">No. FieldLens is a training aid, not a replacement for proper procedure. Always confirm lockout, tagout, and zero voltage, and verify with a qualified supervisor. The tool is built to err toward caution, but the human and the procedure are still in charge.</p>
+        </details>
+        <details>
+          <summary>What equipment does it cover? <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+          <p class="ans">It targets common HVAC and electrical components a first year tech meets, such as capacitors, contactors, and panels. Coverage is expanding. Broader equipment support is on the roadmap.</p>
+        </details>
+        <details>
+          <summary>Does it work offline? <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+          <p class="ans">Not yet. It currently needs a connection. An offline and low signal mode for mechanical rooms and basements is on the roadmap, alongside an on device model.</p>
+        </details>
+        <details>
+          <summary>What does it cost? <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+          <p class="ans">It is free during the open beta. We are pre revenue and focused on getting it right with design partner technicians and shops before pricing anything.</p>
+        </details>
+        <details>
+          <summary>Who built it, and how do I get involved? <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+          <p class="ans">A solo founder with a computer vision and ML research background. If you run a shop or train techs, design partners are welcome. Reach out and we will set you up and learn from how your team actually uses it.</p>
+        </details>
+      </div>
     </div>
-    <div class="grid g2">
-      <ul class="clean">
-        <li>Broaden coverage across more components &amp; equipment types.</li>
-        <li>Training-progress tracking: what a tech has practiced and mastered.</li>
-      </ul>
-      <ul class="clean">
-        <li>Pilots with trade schools and HVAC employers.</li>
-        <li>Offline / low-signal mode for mechanical rooms and basements.</li>
-      </ul>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section id="contact">
+    <div class="wrap">
+      <div class="final">
+        <span class="eyebrow" style="text-align:center">Design partners welcome</span>
+        <h2>Pilot FieldLens with your techs.</h2>
+        <p>It is live and free during the open beta. Try it on your phone in thirty seconds, or get in touch to become a design partner.</p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="/" target="_blank" rel="noopener">
+            Try the live demo
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+          <a class="btn btn-ghost" href="mailto:avilasha153@gmail.com">Become a design partner</a>
+        </div>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
+
+</main>
 
 <!-- FOOTER -->
 <footer>
   <div class="wrap">
-    <div class="foot-cta">
-      <div>
-        <h2 style="font-size:26px;letter-spacing:-.02em">Pilot FieldLens with your techs.</h2>
-        <p class="mut" style="margin-top:6px">Design partners and early feedback welcome.</p>
+    <div class="foot-grid">
+      <div class="foot-col foot-brand">
+        <a class="logo" href="#top" aria-label="FieldLens home">
+          <span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></span>
+          FieldLens
+        </a>
+        <p>AI safety and inspection coaching for new HVAC technicians. Open beta, built by a computer vision and ML researcher.</p>
       </div>
-      <div class="cta-row" style="margin:0">
-        <a class="btn btn-primary" href="mailto:avilasha153@gmail.com">Get in touch</a>
-        <a class="btn btn-ghost" href="/" target="_blank" rel="noopener">Try the demo →</a>
+      <div class="foot-col">
+        <h4>Product</h4>
+        <a href="#how">How it works</a>
+        <a href="#action">In action</a>
+        <a href="#evidence">Evidence</a>
+        <a href="#safety">Safety</a>
+        <a href="/" target="_blank" rel="noopener">Try the live demo</a>
+      </div>
+      <div class="foot-col">
+        <h4>Company</h4>
+        <a href="#problem">Problem</a>
+        <a href="#why">Why now</a>
+        <a href="#roadmap">Roadmap</a>
+        <a href="#team">Founder</a>
+        <a href="mailto:avilasha153@gmail.com">Contact</a>
+      </div>
+      <div class="foot-col">
+        <h4>Legal</h4>
+        <!-- TODO: replace # with real Privacy and Terms pages before any paid or partner launch. -->
+        <a href="#" aria-disabled="true">Privacy (coming soon)</a>
+        <a href="#" aria-disabled="true">Terms (coming soon)</a>
+        <a href="#safety">Disclaimer</a>
       </div>
     </div>
-    <p class="disc">AI-generated guidance. Always verify with a qualified supervisor. FieldLens is an educational training aid and does not replace professional training, procedures, or personal protective equipment.</p>
-    <p class="mut" style="font-size:13px;margin-top:18px">© <span id="yr"></span> FieldLens · <a href="mailto:avilasha153@gmail.com" style="color:var(--brand2)">avilasha153@gmail.com</a></p>
+    <div class="foot-bottom">
+      <span>© <span id="yr"></span> FieldLens. AI generated guidance, always verify with a qualified supervisor.</span>
+      <a href="mailto:avilasha153@gmail.com">avilasha153@gmail.com</a>
+    </div>
   </div>
 </footer>
 
 <script>
   document.getElementById('yr').textContent = new Date().getFullYear();
-  // close mobile menu on link tap
   document.querySelectorAll('#nl a').forEach(function(a){
-    a.addEventListener('click', function(){ document.getElementById('nl').classList.remove('open'); });
+    a.addEventListener('click', function(){
+      var n=document.getElementById('nl'); n.classList.remove('open');
+      var t=document.querySelector('.navtoggle');
+      if(t){t.setAttribute('aria-expanded','false');t.setAttribute('aria-label','Open menu');}
+    });
   });
 </script>
 </body>
