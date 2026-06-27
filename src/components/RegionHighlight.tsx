@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 
 type Tone = 'safe_to_inspect' | 'caution' | 'do_not_touch' | 'unknown'
 
@@ -6,119 +6,97 @@ interface RegionHighlightProps {
   naturalW: number
   naturalH: number
   box: { x: number; y: number; w: number; h: number } | null
-  /** 'cover' = fill+crop (default); 'contain' = whole image letterboxed. Must
+  /** 'cover' = fill+crop; 'contain' (default) = whole image letterboxed. Must
    *  match the frozen image's object-fit so the box stays aligned. */
   fit?: 'cover' | 'contain'
-  /** Safety verdict of the component — the box is drawn in the matching STATUS
-   *  color so the hazard reads directly on the equipment. */
+  /** Safety verdict — sets the box border + tag color so the hazard reads
+   *  directly on the equipment. The accent blue is never used here. */
   tone?: Tone
 }
 
-// Status colors (match the design tokens). The accent blue is deliberately NOT
-// used here — the box always means a safety state, never a neutral UI element.
-const TONE_COLOR: Record<Tone, string> = {
-  do_not_touch: '#e5484d', // red
-  caution: '#e89a26', // amber
-  unknown: '#e89a26', // treat unknown as caution
-  safe_to_inspect: '#2fb866', // green
+// Status colors (match the design tokens). Green only ever means safe; amber
+// uses dark label text, the others use white. Mirrors the prototype box.
+const TONE: Record<Tone, { color: string; label: string; dark: boolean }> = {
+  do_not_touch: { color: '#e5484d', label: 'DO-NOT-TOUCH', dark: false },
+  caution: { color: '#f2a93b', label: 'CAUTION', dark: true },
+  unknown: { color: '#f2a93b', label: 'CAUTION', dark: true },
+  safe_to_inspect: { color: '#2fb866', label: 'SAFE', dark: false },
 }
 
-export function RegionHighlight({ naturalW, naturalH, box, fit = 'cover', tone = 'unknown' }: RegionHighlightProps) {
-  // NOTE: all hooks must run unconditionally — early returns go BELOW them.
-  const [displayBox, setDisplayBox] = useState<{ x: number; y: number; w: number; h: number } | null>(null)
-  const prevBoxRef = useRef<{ x: number; y: number; w: number; h: number } | null>(null)
-  const animationRef = useRef<number>(0)
+export function RegionHighlight({
+  naturalW,
+  naturalH,
+  box,
+  fit = 'contain',
+  tone = 'unknown',
+}: RegionHighlightProps) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [size, setSize] = useState({ w: 0, h: 0 })
 
-  useEffect(() => {
-    if (!box) {
-      setDisplayBox(null)
-      return
+  // Measure the overlay so we can place the box over the (letterboxed) image.
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const update = () => setSize({ w: el.clientWidth, h: el.clientHeight })
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  const t = TONE[tone]
+  const { w: cw, h: ch } = size
+
+  let rect: { left: number; top: number; width: number; height: number } | null = null
+  if (box && naturalW && naturalH && cw && ch) {
+    // Where the image actually sits inside the overlay (object-fit aware).
+    const ia = naturalW / naturalH
+    const ca = cw / ch
+    let dispW = cw
+    let dispH = ch
+    let offX = 0
+    let offY = 0
+    const wider = ca > ia
+    if (fit === 'contain' ? wider : !wider) {
+      dispH = ch
+      dispW = ch * ia
+      offX = (cw - dispW) / 2
+    } else {
+      dispW = cw
+      dispH = cw / ia
+      offY = (ch - dispH) / 2
     }
-
-    const prev = prevBoxRef.current
-    prevBoxRef.current = box
-
-    if (!prev) {
-      setDisplayBox(box)
-      return
+    rect = {
+      left: offX + box.x * dispW,
+      top: offY + box.y * dispH,
+      width: box.w * dispW,
+      height: box.h * dispH,
     }
-
-    const duration = 450
-    const start = performance.now()
-
-    const animate = (now: number) => {
-      const elapsed = now - start
-      const progress = Math.min(elapsed / duration, 1)
-      const eased = 1 - Math.pow(1 - progress, 3)
-
-      setDisplayBox({
-        x: prev.x + (box.x - prev.x) * eased,
-        y: prev.y + (box.y - prev.y) * eased,
-        w: prev.w + (box.w - prev.w) * eased,
-        h: prev.h + (box.h - prev.h) * eased,
-      })
-
-      if (progress < 1) {
-        animationRef.current = requestAnimationFrame(animate)
-      }
-    }
-
-    animationRef.current = requestAnimationFrame(animate)
-    return () => {
-      if (animationRef.current) cancelAnimationFrame(animationRef.current)
-    }
-  }, [box, naturalW, naturalH])
-
-  if (!naturalW || !naturalH || !displayBox) return null
-
-  const color = TONE_COLOR[tone]
-  const x = displayBox.x * naturalW
-  const y = displayBox.y * naturalH
-  const w = displayBox.w * naturalW
-  const h = displayBox.h * naturalH
-  const maskId = 'region-cutout'
+  }
 
   return (
-    <svg
-      className="region"
-      viewBox={`0 0 ${naturalW} ${naturalH}`}
-      preserveAspectRatio={fit === 'contain' ? 'xMidYMid meet' : 'xMidYMid slice'}
-      aria-hidden
-      role="img"
-      aria-label="Highlight on the current inspection area"
-    >
-      <defs>
-        <mask id={maskId}>
-          <rect x="0" y="0" width={naturalW} height={naturalH} fill="white" />
-          <rect x={x} y={y} width={w} height={h} rx={8} fill="black" />
-        </mask>
-      </defs>
-
-      {/* Scrim: dim the rest of the photo so the highlighted part stands out
-          and any card text over the photo stays legible. */}
-      <rect
-        x="0"
-        y="0"
-        width={naturalW}
-        height={naturalH}
-        fill="rgba(8,9,12,0.58)"
-        mask={`url(#${maskId})`}
-      />
-
-      {/* The box itself, in the safety-status color. Solid, calm — no neon glow
-          or marching ants. */}
-      <rect
-        className="region__border"
-        x={x}
-        y={y}
-        width={w}
-        height={h}
-        rx={8}
-        fill="none"
-        stroke={color}
-        strokeWidth={3}
-        vectorEffect="non-scaling-stroke"
-      />
-    </svg>
+    <div className="region" ref={ref} aria-hidden role="img" aria-label="Highlight on the current inspection area">
+      {rect && (
+        <div
+          // Remount per position so the scale-in entrance replays each step.
+          key={`${tone}-${Math.round(rect.left)}-${Math.round(rect.top)}`}
+          className="region__box"
+          style={{
+            left: `${rect.left}px`,
+            top: `${rect.top}px`,
+            width: `${rect.width}px`,
+            height: `${rect.height}px`,
+            borderColor: t.color,
+          }}
+        >
+          <span
+            className="region__tag"
+            style={{ background: t.color, color: t.dark ? '#0b0c0e' : '#fff' }}
+          >
+            {t.label}
+          </span>
+        </div>
+      )}
+    </div>
   )
 }

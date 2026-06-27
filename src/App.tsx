@@ -235,7 +235,32 @@ export default function App() {
       )}
 
       {genStatus === 'idle' && streaming && !frozenUrl && (
-        <div className="hint">Tap a component, or upload a photo</div>
+        <>
+          <div className="scan" aria-hidden>
+            <div className="scan__status">
+              <span className="scan__brand"><span className="scan__dot" />FIELDLENS</span>
+              <span>SCANNING</span>
+            </div>
+            <div className="scan__reticle">
+              <span className="scan__corner scan__corner--tl" />
+              <span className="scan__corner scan__corner--tr" />
+              <span className="scan__corner scan__corner--bl" />
+              <span className="scan__corner scan__corner--br" />
+              <span className="scan__scanline" />
+            </div>
+            <div className="scan__align">ALIGN THE UNIT IN FRAME</div>
+          </div>
+          <button
+            className="scan__capture"
+            onClick={captureFromCamera}
+            aria-label="Capture and identify component"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 8a2 2 0 0 1 2-2h2l1.4-1.8a1 1 0 0 1 .8-.4h5.6a1 1 0 0 1 .8.4L19 6h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" transform="translate(-1 0)" />
+              <circle cx="11" cy="13" r="3.4" />
+            </svg>
+          </button>
+        </>
       )}
 
       {/* Upload a photo (works with or without the camera running). */}

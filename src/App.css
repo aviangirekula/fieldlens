@@ -306,28 +306,56 @@
   width: 100%;
   height: 100%;
   pointer-events: none;
-}
-
-/* Calm, solid status-colored border (the color is set inline per safety
-   verdict). Subtle opacity pulse only — never recolors, no neon glow or ants. */
-.region__border {
-  transition: x 0.4s ease, y 0.4s ease, width 0.4s ease, height 0.4s ease;
-  animation: region-border-pulse 2.4s ease-in-out infinite;
-}
-
-@keyframes region-border-pulse {
-  0%, 100% { opacity: 1; }
-  50%      { opacity: 0.55; }
-}
-
-/* Spotlight fade-in */
-.region {
-  animation: region-enter 0.5s ease-out;
+  animation: region-enter 0.4s ease-out;
 }
 
 @keyframes region-enter {
   from { opacity: 0; }
   to   { opacity: 1; }
+}
+
+/* Bounding box — 2px status-colored border + a mono tag chip pinned to the
+   top-left, exactly like the prototype. Border color is set inline per verdict. */
+.region__box {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px solid;
+  border-radius: 6px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+  animation: flBox 0.45s ease both;
+}
+
+.region__tag {
+  position: absolute;
+  top: -19px;
+  left: -2px;
+  font-family: var(--fl-font-mono);
+  font-size: 0.5rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 3px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* Mono micro-labels — every small uppercase tag is JetBrains Mono, matching
+   the prototype's design system. */
+.wt__eyebrow,
+.wt__check-label,
+.wt__field-tip-tag,
+.wt__safety-tag,
+.wt__visual-indicator-tag,
+.wt__mistake-tag,
+.wt__failures-title,
+.wt__evidence-title,
+.wt__scan-insight-tag,
+.wt__senior-quote-tag,
+.wt__field-finding-tag,
+.gen__verdict-tag,
+.panel__eyebrow,
+.chooser__title {
+  font-family: var(--fl-font-mono);
+  font-weight: 500;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1488,6 +1516,101 @@
 .home:active {
   transform: scale(0.88);
 }
+
+/* ── Scan view chrome — the prototype's scan screen, over the live feed ────── */
+.scan {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.scan__status {
+  position: absolute;
+  top: calc(13px + var(--safe-top));
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px 0 70px; /* clear the home button on the left */
+  font-family: var(--fl-font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.6);
+}
+.scan__brand { display: inline-flex; align-items: center; gap: 6px; }
+.scan__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--fl-accent);
+  animation: scan-dot 2s ease-in-out infinite;
+}
+@keyframes scan-dot { 0%, 100% { opacity: 0.95; } 50% { opacity: 0.35; } }
+
+.scan__reticle {
+  position: absolute;
+  left: 50%;
+  top: 47%;
+  transform: translate(-50%, -50%);
+  width: 36%;
+  max-width: 360px;
+  aspect-ratio: 1.3 / 1;
+}
+.scan__corner {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 0 solid var(--fl-accent);
+}
+.scan__corner--tl { left: 0; top: 0; border-left-width: 2px; border-top-width: 2px; border-radius: 3px 0 0 0; }
+.scan__corner--tr { right: 0; top: 0; border-right-width: 2px; border-top-width: 2px; border-radius: 0 3px 0 0; }
+.scan__corner--bl { left: 0; bottom: 0; border-left-width: 2px; border-bottom-width: 2px; border-radius: 0 0 0 3px; }
+.scan__corner--br { right: 0; bottom: 0; border-right-width: 2px; border-bottom-width: 2px; border-radius: 0 0 3px 0; }
+.scan__scanline {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  top: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(63, 122, 209, 0.85), transparent);
+  animation: scan-line 3.4s ease-in-out infinite;
+}
+@keyframes scan-line { 0% { top: 10%; } 50% { top: 84%; } 100% { top: 10%; } }
+
+.scan__align {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(92px + var(--safe-bottom));
+  text-align: center;
+  font-family: var(--fl-font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.scan__capture {
+  position: absolute;
+  z-index: 20;
+  left: 50%;
+  bottom: calc(24px + var(--safe-bottom));
+  transform: translateX(-50%);
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.85);
+  background: var(--fl-accent);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 0 0 4px rgba(63, 122, 209, 0.18);
+}
+.scan__capture:active { transform: translateX(-50%) scale(0.94); }
+
+/* In landscape the capture button sits center of the camera area (left of any
+   dock); during scan there is no dock, so center of the stage is correct. */
 
 /* Legacy panel support (unused but kept for safety) */
 .panel {

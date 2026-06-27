@@ -13,29 +13,34 @@
   --fl-green: #2fb866;          /* Safe */
   --fl-green-dim: rgba(47, 184, 102, 0.14);
   --fl-green-glow: rgba(47, 184, 102, 0.4);
-  --fl-amber: #e89a26;          /* Caution */
-  --fl-amber-dim: rgba(232, 154, 38, 0.14);
-  --fl-amber-glow: rgba(232, 154, 38, 0.42);
+  --fl-amber: #f2a93b;          /* Caution */
+  --fl-amber-dim: rgba(242, 169, 59, 0.14);
+  --fl-amber-glow: rgba(242, 169, 59, 0.42);
   --fl-red: #e5484d;            /* Danger / Do Not Touch */
   --fl-red-dim: rgba(229, 72, 77, 0.16);
   --fl-red-glow: rgba(229, 72, 77, 0.46);
 
-  /* Surfaces — solid and flat (no mesh, no gradients). */
-  --fl-bg: #0e1014;
-  --fl-bg-mesh: #0e1014;        /* back-compat: was a gradient, now solid */
-  --fl-surface: #171a20;        /* solid cards */
-  --fl-surface-2: #1d212a;      /* nested surfaces */
-  --fl-surface-glass: #15181d;  /* solid panel placed over the photo */
+  /* Tag text tints — the on-color label text for status chips. */
+  --fl-red-text: #f3989b;
+  --fl-amber-text: #f2c98a;
+  --fl-blue-text: #9cc0f0;
+
+  /* Surfaces — solid and flat (no mesh, no gradients). Prototype near-blacks. */
+  --fl-bg: #0b0c0e;
+  --fl-bg-mesh: #0b0c0e;        /* back-compat: was a gradient, now solid */
+  --fl-surface: #101216;        /* solid cards */
+  --fl-surface-2: #16191e;      /* nested surfaces */
+  --fl-surface-glass: #0c0e11;  /* solid action column placed over the photo */
   --fl-glass: rgba(20, 23, 28, 0.82);
   --fl-glass-border: rgba(255, 255, 255, 0.10);
   --fl-line: rgba(255, 255, 255, 0.08);
   --fl-scrim: rgba(8, 9, 12, 0.66); /* dim the photo behind a card */
 
   /* Text — high contrast. */
-  --fl-text: #f3f5f8;
-  --fl-text-secondary: #c2c8d2;
-  --fl-text-dim: #9098a5;
-  --fl-text-muted: #777f8c;
+  --fl-text: #f2f3f5;
+  --fl-text-secondary: #cdd2d8;
+  --fl-text-dim: #a1a6ad;
+  --fl-text-muted: #6b7178;
 
   /* Radius */
   --fl-r-sm: 8px;
@@ -47,9 +52,9 @@
   --fl-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4);
   --fl-shadow-pop: 0 10px 34px rgba(0, 0, 0, 0.5);
 
-  /* Font — plain system stack. */
-  --fl-font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --fl-font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', monospace;
+  /* Font — Schibsted Grotesk (UI) + JetBrains Mono (micro-labels). */
+  --fl-font: 'Schibsted Grotesk', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --fl-font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', 'Cascadia Code', monospace;
 
   /* Safe area */
   --safe-top: env(safe-area-inset-top, 0px);
@@ -85,3 +90,10 @@ button {
   transition: transform 0.08s ease, opacity 0.15s ease, background 0.2s ease, border-color 0.2s ease;
 }
 button:active { transform: scale(0.97); }
+
+/* Bounding-box entrance — transform-only (never opacity-from-0, so a throttled
+   tab can't freeze the highlight invisible). */
+@keyframes flBox {
+  0%   { transform: scale(1.07); }
+  100% { transform: scale(1); }
+}
